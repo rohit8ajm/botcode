@@ -55,9 +55,9 @@ module.exports.getConfigDetails = () => {
         } catch (error) {
             console.error("get config", error);
         }
-
     })
 }
+
 
 module.exports.getAvailableAgents = (email) => {
     return new Promise((resolve, reject) => {
@@ -120,6 +120,115 @@ module.exports.checkAgentTime = () =>{
             
         } catch (error) {
             console.error(error);
+        }
+    })
+}
+
+
+//changes 
+
+
+module.exports.getQuickReplies = () => {
+    return new Promise((resolve, reject) => {
+        try {
+            getToken().then(token => {
+                var options = {
+                    'method': 'GET',
+                    'url': `${process.env.apiBaseURL}cr386_botquickreplieses?$select=cr386_msg`,
+                    'headers': {
+                        'Authorization': `Bearer ${token}`
+                    }
+                };
+                request(options, function (error, response) {
+                    if (error) {
+                        console.error(error);
+                        reject(error)
+                    } else {
+                        resolve(JSON.parse(response.body).value)
+                    }
+                });
+            })
+        } catch (error) {
+            console.error("get config", error);
+        }
+    })
+}
+
+
+module.exports.getUserGuid = (mail) => {
+    return new Promise((resolve, reject) => {
+        try {
+            getToken().then(token => {
+                var options = {
+                    'method': 'GET',
+                    'url': `${process.env.apiBaseURL}systemusers?$select=domainname,mobilephone,systemuserid&$filter=domainname eq '${mail}'`,
+                    'headers': {
+                        'Authorization': `Bearer ${token}`
+                    }
+                };
+                request(options, function (error, response) {
+                    if (error) {
+                        console.error(error);
+                        reject(error)
+                    } else {
+                        resolve(JSON.parse(response.body).value)
+                    }
+                });
+            })
+        } catch (error) {
+            console.error("get config", error);
+        }
+    })
+}
+
+
+module.exports.getAgentGuid = (userGuid) => {
+    return new Promise((resolve, reject) => {
+        try {
+            getToken().then(token => {
+                var options = {
+                    'method': 'GET',
+                    'url': `${process.env.apiBaseURL}cr386_agentinfos?$select=cr386_agentinfoid&$filter=_cr386_agentnames_value eq ${userGuid}`,
+                    'headers': {
+                        'Authorization': `Bearer ${token}`
+                    }
+                };
+                request(options, function (error, response) {
+                    if (error) {
+                        console.error(error);
+                        reject(error)
+                    } else {
+                        resolve(JSON.parse(response.body).value)
+                    }
+                });
+            })
+        } catch (error) {
+            console.error("get config", error);
+        }
+    })
+}
+
+module.exports.setDropDown = (agentGuid,body) => {
+    return new Promise((resolve, reject) => {
+        try {
+            getToken().then(token => {
+                var request = require('request');
+                var options = {
+                  'method': 'PATCH',
+                  'url': `${process.env.apiBaseURL}cr386_agentinfos(${agentGuid})`,
+                  'headers': {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(body)
+                };
+                request(options, function (error, response) {
+                  if (error) throw new Error(error);
+                  resolve(response.body)
+                });
+            })
+        } catch (error) {
+            console.error("get config", error);
         }
     })
 }

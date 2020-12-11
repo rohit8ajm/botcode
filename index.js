@@ -6,6 +6,7 @@
 // Import required packages
 const path = require('path');
 const restify = require('restify');
+const uiApis = require('./uiAPI')
 
 // Import required bot services.
 // See https://aka.ms/bot-services to learn more about the different parts of a bot.
@@ -75,3 +76,13 @@ server.post('/api/messages', (req, res) => {
     });
 });
 
+const bodyParser = require('body-parser')
+server.use(bodyParser.json())
+
+server.get('/api/crmwrapper/getUserConfigs',uiApis.getUserConfigs)
+server.get('/api/crmwrapper/getAgentConfigs',uiApis.getAgentConfigs)
+server.get('/api/crmwrapper/getQuickReplies',uiApis.getQuickReplies)
+server.get('/api/crmwrapper/getUserGuid',uiApis.getUserGuid)
+server.get('/api/crmwrapper/getAgentGuid',uiApis.getAgentGuid)
+server.post('/api/crmwrapper/setDropDown',uiApis.setDropDown)
+server.post('/api/crmwrapper/token',uiApis.getToken)
