@@ -5,6 +5,7 @@ const { ActivityHandler, TurnContext, TeamsInfo, CardFactory, MessageFactory, Ac
 const cards = require('./cards')
 const apis = require('./API');
 const { parse } = require('path');
+const { off } = require('process');
 let userType = {}
 let availableAgents = {}
 class LiveAgentChatbot extends ActivityHandler {
@@ -18,17 +19,10 @@ class LiveAgentChatbot extends ActivityHandler {
         this.userBotConvo = {}
         this.userqueue = {}
         this.message = 'abcd';
-
         this.agentRequestedByUser = {}
         this.onConversationUpdate(async (context, next) => {
             this.adapter = context.adapter;
-
             await next();
-            // const membersAdded = context.activity.membersAdded;
-            // for (let cnt = 0; cnt < membersAdded.length; cnt++) {
-            //     if (membersAdded[cnt].id === context.activity.recipient.id) {
-            //     }
-            // }
         });
 
         this.onEvent(async (context, next) => {
@@ -95,46 +89,58 @@ class LiveAgentChatbot extends ActivityHandler {
         })
 
         this.onMembersAdded(async (context, next) => {
-            //////////////////////////////////////////welcome message to new users-----------------------------
-            const membersAdded = context.activity.membersAdded;
-            for (let cnt = 0; cnt < membersAdded.length; cnt++) {
-                if (membersAdded[cnt].id !== context.activity.recipient.id) {
-                    this.message = await apis.getConfigDetails();
-                    let conversationReference = await TurnContext.getConversationReference(context.activity);
-                    // let agentExists = await apis.getAvailableAgents(conversationReference.user.name);
-                    let agentExists;
-                    if (!Object.keys(userType).includes(conversationReference.user.name)) {
-                        agentExists = await apis.getAvailableAgents(conversationReference.user.name);
-                        userType[conversationReference.user.name] = agentExists
-                    } else {
-                        agentExists = userType[conversationReference.user.name]
-                    }
-                    ///////////////////////////////////////welcome agent message---------------------------------------------------
-                    if (conversationReference.user.name && (agentExists.email.includes(conversationReference.user.name.toLowerCase()))) {
-                        availableAgents[conversationReference.user.name] = {}
-                        this.userBotConvo[conversationReference.user.name] === undefined ? this.userBotConvo[conversationReference.user.name] = {} : this.userBotConvo
-                        this.userBotConvo[conversationReference.user.name]["convoRef"] = conversationReference;
-                        this.userBotConvo[conversationReference.user.name]["userConnected"] = 0
-                        this.userBotConvo[conversationReference.user.name]["agentRequestSent"] = 0
-                        this.userBotConvo[conversationReference.user.name]["agentRequested"] = 0
-                        for (let i = 0; i < this.message.length; i++) {
-                            if (this.message[i].cr386_key.toLowerCase() === 'agentwelcomemessage') {
-                                await context.sendActivity(this.message[i].cr386_value.replace('Hi.', `Hi ${agentExists.fullname},`))
-                                break;
+            try {
+                //////////////////////////////////////////welcome message to new users-----------------------------
+                const membersAdded = context.activity.membersAdded;
+                for (let cnt = 0; cnt < membersAdded.length; cnt++) {
+                    if (membersAdded[cnt].id !== context.activity.recipient.id) {
+                        this.message = await apis.getConfigDetails();
+                        let conversationReference = await TurnContext.getConversationReference(context.activity);
+                        // let agentExists = await apis.getAvailableAgents(conversationReference.user.name);
+                        let agentExists;
+                        if (!Object.keys(userType).includes(conversationReference.user.name)) {
+                            agentExists = await apis.getAvailableAgents(conversationReference.user.name);
+                            userType[conversationReference.user.name] = agentExists
+                        } else {
+                            agentExists = userType[conversationReference.user.name]
+                        }
+                        ///////////////////////////////////////welcome agent message---------------------------------------------------
+                        if (conversationReference.user.name && (agentExists.email.includes(conversationReference.user.name.toLowerCase()))) {
+                            availableAgents[conversationReference.user.name] = {}
+                            this.userBotConvo[conversationReference.user.name] === undefined ? this.userBotConvo[conversationReference.user.name] = {} : this.userBotConvo
+                            this.userBotConvo[conversationReference.user.name]["convoRef"] = conversationReference;
+                            this.userBotConvo[conversationReference.user.name]["userConnected"] = 0
+                            this.userBotConvo[conversationReference.user.name]["agentRequestSent"] = 0
+                            this.userBotConvo[conversationReference.user.name]["agentRequested"] = 0
+                            for (let i = 0; i < this.message.length; i++) {
+                                if (this.message[i].cr386_key.toLowerCase() === 'agentwelcomemessage') {
+                                    await context.sendActivity(this.message[i].cr386_value.replace('Hi.', `Hi ${agentExists.fullname},`))
+                                    break;
+                                }
                             }
                         }
-                    }
-                    ///////////////////////////////////////welcome user message---------------------------------------------------
-                    else {
-                        for (let i = 0; i < this.message.length; i++) {
-                            if (this.message[i].cr386_key.toLowerCase() === 'userwelcomemessage') {
-                                await context.sendActivity(this.message[i].cr386_value)
-                                await context.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(cards.userHelpCard)))
-                                break;
+                        ///////////////////////////////////////welcome user message---------------------------------------------------
+                        else {
+                            for (let i = 0; i < this.message.length; i++) {
+                                if (this.message[i].cr386_key.toLowerCase() === 'userwelcomemessage') {
+                                    await context.sendActivity(this.message[i].cr386_value)
+                                    await context.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.userHelpCard(this.message))))
+                                    let offHours = await apis.checkAgentTime(this.message)
+                                    if (offHours.message !== "working") {
+                                        await context.sendActivity({
+                                            type: ActivityTypes.Event,
+                                            name: "NoAgent",
+                                            text: offHours.message
+                                        })
+                                    }
+                                    break;
+                                }
                             }
                         }
                     }
                 }
+            } catch (error) {
+                console.error(error);
             }
 
             // By calling next() you ensure that the next BotHandler is run.
@@ -145,43 +151,15 @@ class LiveAgentChatbot extends ActivityHandler {
             // Echo back what the user said
             try {
                 let conversationReference = await TurnContext.getConversationReference(context.activity);
-                // let agentExists;
-                // if (!Object.keys(userType).includes(conversationReference.user.name)) {
-                //     agentExists = await apis.getAvailableAgents(conversationReference.user.name);
-                //     userType[conversationReference.user.name] = agentExists
-                // } else {
                 let agentExists = userType[conversationReference.user.name]
-                // }
                 /////////////////////////////agent flow------------------------------------
-                if (
-                    conversationReference.user.name && (agentExists.email.includes(conversationReference.user.name.toLowerCase())
-                        || userType[conversationReference.user.name]["userType"] === "agent")) {
+                if (conversationReference.user.name && (agentExists.email.includes(conversationReference.user.name.toLowerCase())
+                    || userType[conversationReference.user.name]["userType"] === "agent")) {
                     userType[conversationReference.user.name]["userType"] = "agent"
                     availableAgents[conversationReference.user.name] = {}
                     this.userBotConvo[conversationReference.user.name] === undefined ? this.userBotConvo[conversationReference.user.name] = {} : this.userBotConvo
                     this.userBotConvo[conversationReference.user.name]["convoRef"] = conversationReference;
-                    // ///////////////////////////////agent marks himself unavailable-----------------------------------
-                    // if (context.activity.text && context.activity.text.toLowerCase().includes("unavailable")) {
-                    //     if (this.userBotConvo[conversationReference.user.name].userConnected > 0) {
-
-                    //         for (let i = 0; i < this.message.length; i++) {
-                    //             if (this.message[i].cr386_key === "AgentEndConversationMessageToAgent") {
-                    //                 await context.sendActivity(this.message[i].cr386_value)
-                    //             } else if (this.message[i].cr386_key === "DisconnectedAgent") {
-                    //                 await this.adapter.continueConversation(this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.user.id].convoRef, async (sendContext) => {
-                    //                     await sendContext.sendActivity(this.message[i].cr386_value);
-                    //                     await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(cards.feedbackSmileyCard)))
-                    //                 })
-                    //             }
-                    //         }
-                    //         this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.user.id]["agentConnected"] = 0
-                    //         this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.user.id]["agentConvo"] = conversationReference
-                    //     }
-                    //     delete this.userBotConvo[conversationReference.user.name]
-                    //     delete availableAgents[conversationReference.user.name]
-                    // }
                     ///////////////////////////////agent sends bye-----------------------------------
-                    // else 
                     if (context.activity.text && context.activity.text.toLowerCase().includes("bye") && this.userBotConvo[conversationReference.user.name].userConnected > 0) {
 
                         for (let i = 0; i < this.message.length; i++) {
@@ -251,7 +229,9 @@ class LiveAgentChatbot extends ActivityHandler {
                     }
                     ///////////////////////////////agent rejecting request--------------------------
                     else if (context.activity.value && context.activity.value.agentResponse.toLowerCase() === "reject") {
+                        this.userBotConvo[conversationReference.user.name]["convoRef"] = conversationReference
                         this.userBotConvo[this.agentRequestedByUser[context.activity.value.userConvo.user.id]]["agentRequested"] = 0
+                        this.userBotConvo[context.activity.value.userConvo.user.id]["requestCount"] = 0
                         delete this.agentRequestedByUser[context.activity.value.userConvo.user.id]
 
                     }
@@ -286,23 +266,43 @@ class LiveAgentChatbot extends ActivityHandler {
                         })
                         this.userBotConvo[this.userBotConvo[conversationReference.user.id].agentConvo.user.name].userConvo = conversationReference
                     }
+                    //////////////////////////user contact us option--------------------------------------
+                    else if (context.activity.text && context.activity.text.toLowerCase().includes("contact us")) {
+                        for (let i = 0; i < this.message.length; i++) {
+                            if (this.message[i].cr386_key === 'ContactUs') {
+                                await context.sendActivity(this.message[i].cr386_value);
+                                break;
+                            }
+                        }
+                    }
                     //////////////////////////user trying to connect to agent-------------------------------
                     else if (context.activity.text && context.activity.text.toLowerCase().includes("agent")) {
-                        this.userqueue[conversationReference.user.id] = {};
-                        // if (new Date().getHours() > 17) {
-                        this.userBotConvo[conversationReference.user.id]["activityTime"] = new Date();
-                        this.userBotConvo[conversationReference.user.id]["convoRef"] = conversationReference;
-                        this.userBotConvo[conversationReference.user.id]["requestCount"] = 0;
-                        this.userBotConvo[conversationReference.user.id]["requestSentToAgents"] === undefined
-                            ? this.userBotConvo[conversationReference.user.id]["requestSentToAgents"] = []
-                            : this.userBotConvo[conversationReference.user.id]["requestSentToAgents"];
-                        this.userBotConvo[conversationReference.user.id]["agentConnected"] = 0
+                        let offHours = await apis.checkAgentTime(this.message)
+                        if (offHours.time === "working") {
+                            this.userqueue[conversationReference.user.id] = {};
+                            this.userBotConvo[conversationReference.user.id]["activityTime"] = new Date();
+                            this.userBotConvo[conversationReference.user.id]["convoRef"] = conversationReference;
+                            this.userBotConvo[conversationReference.user.id]["requestCount"] = 0;
+                            this.userBotConvo[conversationReference.user.id]["agentRequestCount"] = 0
+                            this.userBotConvo[conversationReference.user.id]["requestSentToAgents"] === undefined
+                                ? this.userBotConvo[conversationReference.user.id]["requestSentToAgents"] = []
+                                : this.userBotConvo[conversationReference.user.id]["requestSentToAgents"];
+                            this.userBotConvo[conversationReference.user.id]["agentConnected"] = 0
+                            this.userActivityTimeCheck(conversationReference.user.id);
+                        } else {
+                            await context.sendActivity({
+                                type: ActivityTypes.Event,
+                                text: offHours.message
+                            })
+                            for (let i = 0; i < this.message.length; i++) {
+                                if (this.message[i].cr386_key === 'AgentOffHoursMessage') {
+                                    await context.sendActivity(this.message[i].cr386_value);
+                                    await context.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.userHelpCard(this.message))))
+                                    break;
+                                }
+                            }
+                        }
 
-
-                        this.userActivityTimeCheck(conversationReference.user.id);
-                        // }else{
-                        //     await context.sendActivity("agent is not available")
-                        // }
                     }
                     //////////////////////////user message to bot------------------------------------
                     else {
@@ -321,7 +321,7 @@ class LiveAgentChatbot extends ActivityHandler {
                         } else if (context.activity.text.toLowerCase().includes("yes")) {
                             await context.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(cards.feedbackSmileyCard)))
                         } else if (context.activity.text.toLowerCase().includes("no")) {
-                            await context.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(cards.userHelpCard)))
+                            await context.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.userHelpCard(this.message))))
                         } else {
                             let qnaResults = await this.callQnAapi(context.activity.text)
                             this.userBotConvo[conversationReference.user.id]["convoHistory"].push(`**User:** ${context.activity.text}`)
@@ -338,7 +338,7 @@ class LiveAgentChatbot extends ActivityHandler {
                                     if (this.message[i].cr386_key.toLowerCase() === 'noqueryfoundinkb') {
                                         this.userBotConvo[conversationReference.user.id]["convoHistory"].push(`**Bot:** ${this.message[i].cr386_value}`)
                                         await context.sendActivity(this.message[i].cr386_value);
-                                        await context.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(cards.userHelpCard)))
+                                        await context.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.userHelpCard(this.message))))
                                         break;
                                     }
                                 }
@@ -360,7 +360,7 @@ class LiveAgentChatbot extends ActivityHandler {
         try {
             this.userBotConvo[userId]['requestTimeObj'] = setInterval(async () => {
                 let availableAgentstoCheck = Object.keys(availableAgents);
-                if (!availableAgentstoCheck.length <= 0) {
+                if (availableAgentstoCheck.length > 0) {
                     let time = new Date() - this.userBotConvo[userId].activityTime
                     let xtime = 0;
                     for (let i = 0; i < this.message.length; i++) {
@@ -369,8 +369,8 @@ class LiveAgentChatbot extends ActivityHandler {
                             break;
                         }
                     }
-                    if (this.userBotConvo[userId].requestCount === 0) {
-                        time = xtime+10
+                    if (this.userBotConvo[userId]["requestCount"] === 0) {
+                        time = xtime + 10
                     }
                     if (time > xtime) {
                         if (this.userBotConvo[userId]["agentRequestedLast"] !== undefined && this.userBotConvo[userId]["agentRequestedLast"] !== "abc") {
@@ -393,26 +393,27 @@ class LiveAgentChatbot extends ActivityHandler {
                                     : this.userBotConvo[this.agentRequestedByUser[userId]]["agentRequested"] = 0
                                 this.agentRequestedByUser[userId] = availableAgentstoCheck[i]
                                 this.userBotConvo[availableAgentstoCheck[i]]["agentRequested"] = 1
+                                this.userBotConvo[userId]["requestCount"] += 1
                                 this.userBotConvo[userId]["requestSentToAgents"].push(availableAgentstoCheck[i])
                                 this.userBotConvo[userId]["activityTime"] = new Date();
                                 let key = Object.keys(this.userqueue)
-                                if (this.userBotConvo[userId]["requestCount"] === 0) {
-                                    this.userBotConvo[userId]["requestCount"] += 1
+                                if (this.userBotConvo[userId]["agentRequestCount"] === 0) {
+                                    this.userBotConvo[userId]["agentRequestCount"] += 1
                                     for (let i = 0; i < this.message.length; i++) {
                                         if (this.message[i].cr386_key === "OnRequestTalkToAgent") {
                                             await this.adapter.continueConversation(this.userBotConvo[userId].convoRef, async (sendContext) => {
-                                                await sendContext.sendActivity({
-                                                    type: ActivityTypes.Event,
-                                                    name: "AgentQueue",
-                                                    text: this.message[i].cr386_value
-                                                });
+                                                // await sendContext.sendActivity({
+                                                //     type: ActivityTypes.Event,
+                                                //     name: "AgentQueue",
+                                                //     text: this.message[i].cr386_value
+                                                // });
                                                 await sendContext.sendActivity(this.message[i].cr386_value)
                                             })
                                             break;
                                         }
                                     }
                                 } else {
-                                    this.userBotConvo[userId]["requestCount"] += 1
+                                    this.userBotConvo[userId]["agentRequestCount"] += 1
                                     if ((key.indexOf(userId) + 1) !== this.userBotConvo[userId]["userQueuePosition"]) {
                                         this.userBotConvo[userId]["userQueuePosition"] = key.indexOf(userId) + 1;
                                         for (let i = 0; i < this.message.length; i++) {
@@ -488,7 +489,7 @@ class LiveAgentChatbot extends ActivityHandler {
                                                     text: "Agent is not available."
                                                 })
                                                 await sendContext.sendActivity(this.message[i].cr386_value)
-                                                await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(cards.userHelpCard)))
+                                                await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.userHelpCard(this.message))))
 
                                             })
                                             break;
@@ -523,7 +524,7 @@ class LiveAgentChatbot extends ActivityHandler {
                                     text: "Agent is not available."
                                 })
                                 await sendContext.sendActivity(this.message[i].cr386_value);
-                                await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(cards.userHelpCard)))
+                                await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.userHelpCard(this.message))))
 
                             })
                             break;

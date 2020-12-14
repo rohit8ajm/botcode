@@ -68,6 +68,7 @@ server.listen(process.env.port || process.env.PORT || 3978, function () {
     console.log('\nTo talk to your bot, open the emulator select "Open Bot"');
 });
 
+
 // Listen for incoming activities and route them to your bot main dialog.
 server.post('/api/messages', (req, res) => {
     adapter.processActivity(req, res, async (turnContext) => {
@@ -79,10 +80,10 @@ server.post('/api/messages', (req, res) => {
 const bodyParser = require('body-parser')
 server.use(bodyParser.json())
 
-server.get('/api/crmwrapper/getUserConfigs',uiApis.getUserConfigs)
-server.get('/api/crmwrapper/getAgentConfigs',uiApis.getAgentConfigs)
-server.get('/api/crmwrapper/getQuickReplies',uiApis.getQuickReplies)
-server.get('/api/crmwrapper/getUserGuid',uiApis.getUserGuid)
-server.get('/api/crmwrapper/getAgentGuid',uiApis.getAgentGuid)
-server.post('/api/crmwrapper/setDropDown',uiApis.setDropDown)
-server.post('/api/crmwrapper/token',uiApis.getToken)
+server.get('/api/crmwrapper/getUserConfigs', uiApis.getUserConfigs)
+server.get('/api/crmwrapper/getAgentConfigs', uiApis.getAgentConfigs)
+server.get('/api/crmwrapper/getQuickReplies', uiApis.getQuickReplies)
+server.get('/api/crmwrapper/getUserGuid', uiApis.getUserGuid)
+server.get('/api/crmwrapper/getAgentGuid', uiApis.getAgentGuid)
+server.post('/api/crmwrapper/setDropDown', uiApis.setDropDown)
+server.post('/api/crmwrapper/token', uiApis.getToken)

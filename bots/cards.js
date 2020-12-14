@@ -1,3 +1,5 @@
+var API = require('../bots/API')
+
 module.exports.userConnectionRequestCard = (convoref) => {
     var card = {
         "type": "AdaptiveCard",
@@ -142,33 +144,40 @@ module.exports.confimrmationCard = {
     "version": "1.2"
 }
 
-module.exports.userHelpCard = {
-    "type": "AdaptiveCard",
-    "body": [
-        {
-            "type": "Container",
-            "items": [
-                {
-                    "type": "TextBlock",
-                    "wrap": true,
-                    "size": "Default",
-                    "text": "How may I help you ?"
-                }
-            ]
-        },
-        {
-            "type": "ActionSet",
-            "actions": [
-                {
-                    "type": "Action.Submit",
-                    "title": "Ask Your Question",
-                    "data": {
-                        "userResponse": "FAQ"
+module.exports.userHelpCard = async (message) => {
+    let offHours = await API.checkAgentTime(message);
+    var card = {
+        "type": "AdaptiveCard",
+        "body": [
+            {
+                "type": "Container",
+                "items": [
+                    {
+                        "type": "TextBlock",
+                        "wrap": true,
+                        "size": "Default",
+                        "text": "How may I help you ?"
                     }
-                }
-            ]
-        },
-        {
+                ]
+            },
+            {
+                "type": "ActionSet",
+                "actions": [
+                    {
+                        "type": "Action.Submit",
+                        "title": "Ask Your Question",
+                        "data": {
+                            "userResponse": "FAQ"
+                        }
+                    }
+                ]
+            }
+        ],
+        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+        "version": "1.2"
+    }
+    if (offHours.time === "working") {
+        card['body'].push({
             "type": "ActionSet",
             "actions": [
                 {
@@ -179,10 +188,22 @@ module.exports.userHelpCard = {
                     }
                 }
             ]
-        }
-    ],
-    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-    "version": "1.2"
+        })
+    } else {
+        card['body'].push({
+            "type": "ActionSet",
+            "actions": [
+                {
+                    "type": "Action.Submit",
+                    "title": "Contact Us",
+                    "data": {
+                        "userResponse": "Contact Us"
+                    }
+                }
+            ]
+        })
+    }
+    return card;
 }
 
 module.exports.feedbackSmileyCard = {
