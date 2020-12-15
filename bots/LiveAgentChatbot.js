@@ -20,6 +20,7 @@ class LiveAgentChatbot extends ActivityHandler {
         this.userqueue = {}
         this.message = 'abcd';
         this.agentRequestedByUser = {}
+        this.userMessageIdleTimeOut();
         this.onConversationUpdate(async (context, next) => {
             this.adapter = context.adapter;
             await next();
@@ -112,6 +113,7 @@ class LiveAgentChatbot extends ActivityHandler {
                             this.userBotConvo[conversationReference.user.name]["userConnected"] = 0
                             this.userBotConvo[conversationReference.user.name]["agentRequestSent"] = 0
                             this.userBotConvo[conversationReference.user.name]["agentRequested"] = 0
+                            userType[conversationReference.user.name]["userType"] = "agent"
                             for (let i = 0; i < this.message.length; i++) {
                                 if (this.message[i].cr386_key.toLowerCase() === 'agentwelcomemessage') {
                                     await context.sendActivity(this.message[i].cr386_value.replace('Hi.', `Hi ${agentExists.fullname},`))
@@ -121,8 +123,11 @@ class LiveAgentChatbot extends ActivityHandler {
                         }
                         ///////////////////////////////////////welcome user message---------------------------------------------------
                         else {
+                            userType[conversationReference.user.id] === undefined ? userType[conversationReference.user.id] = {} : userType[conversationReference.user.id]
+                            userType[conversationReference.user.id]["userType"] = "user"
                             for (let i = 0; i < this.message.length; i++) {
                                 if (this.message[i].cr386_key.toLowerCase() === 'userwelcomemessage') {
+
                                     await context.sendActivity(this.message[i].cr386_value)
                                     await context.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.userHelpCard(this.message))))
                                     let offHours = await apis.checkAgentTime(this.message)
@@ -192,6 +197,7 @@ class LiveAgentChatbot extends ActivityHandler {
                     }
                     ///////////////////////////////agent sending message to user--------------------------
                     else if (this.userBotConvo[conversationReference.user.name].userConnected > 0) {
+                        this.userBotConvo[conversationReference.user.name]["activityTime"] = new Date()
                         await this.adapter.continueConversation(this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.user.id].convoRef, async (sendContext) => {
                             await sendContext.sendActivity(context.activity.text);
                         })
@@ -252,7 +258,8 @@ class LiveAgentChatbot extends ActivityHandler {
                 }
                 /////////////////////////////user flow---------------------------------------
                 else {
-                    userType[conversationReference.user.name]["userType"] = "user"
+                    userType[conversationReference.user.id] === undefined ? userType[conversationReference.user.id] = {} : userType[conversationReference.user.id]
+                    userType[conversationReference.user.id]["userType"] = "user"
                     //////////////////////////converting button click to text----------------------------------
                     if (context.activity.value && context.activity.value.userResponse) {
                         context.activity.text = context.activity.value.userResponse
@@ -261,6 +268,7 @@ class LiveAgentChatbot extends ActivityHandler {
                     this.userBotConvo[conversationReference.user.id]["convoHistory"] === undefined ? this.userBotConvo[conversationReference.user.id]["convoHistory"] = [] : this.userBotConvo
                     /////////////////////////////user message to agent---------------------------------
                     if (this.userBotConvo[conversationReference.user.id] && this.userBotConvo[conversationReference.user.id]["agentConnected"] === 1) {
+                        this.userBotConvo[conversationReference.user.id]["activityTime"] = new Date();
                         await this.adapter.continueConversation(this.userBotConvo[conversationReference.user.id].agentConvo, async (sendContext) => {
                             await sendContext.sendActivity(context.activity.text);
                         })
@@ -288,7 +296,7 @@ class LiveAgentChatbot extends ActivityHandler {
                                 ? this.userBotConvo[conversationReference.user.id]["requestSentToAgents"] = []
                                 : this.userBotConvo[conversationReference.user.id]["requestSentToAgents"];
                             this.userBotConvo[conversationReference.user.id]["agentConnected"] = 0
-                            this.userActivityTimeCheck(conversationReference.user.id);
+                            this.queueManagementLogic(conversationReference.user.id);
                         } else {
                             await context.sendActivity({
                                 type: ActivityTypes.Event,
@@ -356,12 +364,12 @@ class LiveAgentChatbot extends ActivityHandler {
     }
 
     //////////////////////////////////////queue management logic------------------------------------------------------
-    async userActivityTimeCheck(userId) {
+    async queueManagementLogic(userId) {
         try {
             this.userBotConvo[userId]['requestTimeObj'] = setInterval(async () => {
                 let availableAgentstoCheck = Object.keys(availableAgents);
                 if (availableAgentstoCheck.length > 0) {
-                    let time = new Date() - this.userBotConvo[userId].activityTime
+                    let time = new Date() - this.userBotConvo[userId]["activityTime"]
                     let xtime = 0;
                     for (let i = 0; i < this.message.length; i++) {
                         if (this.message[i].cr386_key === "AgentWaitingTimeInMilliseconds") {
@@ -537,6 +545,68 @@ class LiveAgentChatbot extends ActivityHandler {
         }
     }
 
+    /////////////////////////////////////activity time check (ideal timeout) logic--------------------------------------
+    async userMessageIdleTimeOut() {
+        try {
+            setInterval(async () => {
+                let keys = Object.keys(this.userBotConvo);
+                let userNotSendingMessageTime, agentNotSendingMessageTime, messageToUser, messageToAgent;
+                if (this.message.length > 5) {
+                    this.message.forEach(element => {
+                        if (element.cr386_key === "AgentIdealTimeForLiveChatConversation") {
+                            userNotSendingMessageTime = element.cr386_value
+                        } else if (element.cr386_key === "AgentIdealWaitingTimeMessageToUser") {
+                            messageToUser = element.cr386_value
+                        } else if (element.cr386_key === "UserIdealTimeForLiveChatConversation") {
+                            agentNotSendingMessageTime = element.cr386_value
+                        } else if (element.cr386_key === "UserIdealWaitingTimeMessageToAgent") {
+                            messageToAgent = element.cr386_value
+                        }
+                    })
+                }
+                keys.forEach(async (element) => {
+                    
+                    ////////////////////////////agent connected but not sending message-----------------------------
+                    if (userType[element].userType === "agent" && this.userBotConvo[element]["userConnected"] > 0 &&
+                        ((new Date() - this.userBotConvo[element]["activityTime"]) > agentNotSendingMessageTime)) {
+                        await this.adapter.continueConversation(this.userBotConvo[element].convoRef, async (sendContext) => {
+                            await sendContext.sendActivity(messageToAgent)
+                        })
+                        await this.adapter.continueConversation(this.userBotConvo[this.userBotConvo[element].userConvo.user.id].convoRef, async (sendContext) => {
+                            await sendContext.sendActivity(messageToUser)
+                            await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(cards.feedbackSmileyCard)))
+                        })
+                        availableAgents[element] = {}
+                        this.userBotConvo[element]["userConnected"] = 0
+                        this.userBotConvo[this.userBotConvo[element].userConvo.user.id]["agentConnected"] = 0
+                        this.userBotConvo[this.userBotConvo[element].userConvo.user.id]["userQueuePosition"] = 0
+                        this.userBotConvo[this.userBotConvo[element].userConvo.user.id]["agentConvo"] = this.userBotConvo[element].convoRef
+                        delete this.userBotConvo[element].userConvo
+                    }
+                    ////////////////////////////user connected but not sending message-----------------------------
+                    else if (userType[element.userType === "user"] && this.userBotConvo[element]["agentConnected"] > 0 &&
+                        ((new Date() - this.userBotConvo[element]["activityTime"]) > userNotSendingMessageTime)) {
+                        await this.adapter.continueConversation(this.userBotConvo[element].convoRef, async (sendContext) => {
+                            await sendContext.sendActivity(messageToUser)
+                            await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(cards.feedbackSmileyCard)))
+                        })
+                        await this.adapter.continueConversation(this.userBotConvo[element].agentConvo, async (sendContext) => {
+                            await sendContext.sendActivity(messageToAgent)
+                        })
+                        availableAgents[this.userBotConvo[element].agentConvo.user.name] = {}
+                        this.userBotConvo[this.userBotConvo[element].agentConvo.user.name]["userConnected"] = 0
+                        this.userBotConvo[element]["agentConnected"] = 0
+                        this.userBotConvo[element]["userQueuePosition"] = 0
+                        this.userBotConvo[element]["agentConvo"] = this.userBotConvo[element].agentConvo
+                        delete this.userBotConvo[this.userBotConvo[element].agentConvo.user.name].userConvo
+                    }
+                })
+            }, 1000)
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
     /////////////////////////////////////function to call QnA maker for FAQ----------------------------------------------
     async callQnAapi(text) {
         return new Promise((resolve, reject) => {
