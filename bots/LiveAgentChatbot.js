@@ -206,6 +206,7 @@ class LiveAgentChatbot extends ActivityHandler {
                     ///////////////////////////////agent accepting request--------------------------
                     else if (context.activity.value && context.activity.value.agentResponse.toLowerCase() === "accept") {
                         this.userBotConvo[conversationReference.user.name]["userConnected"] = 1
+                        this.userBotConvo[conversationReference.user.name]["activityTime"] = new Date();
                         this.userBotConvo[conversationReference.user.name]["userConvo"] = context.activity.value.userConvo
                         this.userBotConvo[context.activity.value.userConvo.user.id]['requestSentToAgents'] = []
                         delete this.userqueue[context.activity.value.userConvo.user.id]
@@ -565,10 +566,9 @@ class LiveAgentChatbot extends ActivityHandler {
                     })
                 }
                 keys.forEach(async (element) => {
-                    
                     ////////////////////////////agent connected but not sending message-----------------------------
                     if (userType[element].userType === "agent" && this.userBotConvo[element]["userConnected"] > 0 &&
-                        ((new Date() - this.userBotConvo[element]["activityTime"]) > agentNotSendingMessageTime)) {
+                        ((new Date() - this.userBotConvo[element]["activityTime"]) > parseInt(userNotSendingMessageTime))) {
                         await this.adapter.continueConversation(this.userBotConvo[element].convoRef, async (sendContext) => {
                             await sendContext.sendActivity(messageToAgent)
                         })
@@ -584,8 +584,8 @@ class LiveAgentChatbot extends ActivityHandler {
                         delete this.userBotConvo[element].userConvo
                     }
                     ////////////////////////////user connected but not sending message-----------------------------
-                    else if (userType[element.userType === "user"] && this.userBotConvo[element]["agentConnected"] > 0 &&
-                        ((new Date() - this.userBotConvo[element]["activityTime"]) > userNotSendingMessageTime)) {
+                    else if (userType[element].userType === "user" && this.userBotConvo[element]["agentConnected"] > 0 &&
+                        ((new Date() - this.userBotConvo[element]["activityTime"]) > parseInt(agentNotSendingMessageTime))) {
                         await this.adapter.continueConversation(this.userBotConvo[element].convoRef, async (sendContext) => {
                             await sendContext.sendActivity(messageToUser)
                             await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(cards.feedbackSmileyCard)))
