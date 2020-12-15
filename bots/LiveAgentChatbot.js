@@ -67,7 +67,7 @@ class LiveAgentChatbot extends ActivityHandler {
                         }
                         this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.user.id]["agentConnected"] = 0
                         this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.user.id]["userQueuePosition"] = 0
-                        this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.user.id]["agentConvo"] = conversationReference
+                        delete this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.user.id]["agentConvo"]
                     }
                     delete this.userBotConvo[conversationReference.user.name]
                     delete availableAgents[conversationReference.user.name]
@@ -187,7 +187,7 @@ class LiveAgentChatbot extends ActivityHandler {
                         this.userBotConvo[conversationReference.user.name]["userConnected"] = 0
                         this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.user.id]["agentConnected"] = 0
                         this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.user.id]["userQueuePosition"] = 0
-                        this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.user.id]["agentConvo"] = conversationReference
+                        delete this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.user.id]["agentConvo"]
                         delete this.userBotConvo[conversationReference.user.name].userConvo
 
                     }
@@ -572,6 +572,7 @@ class LiveAgentChatbot extends ActivityHandler {
                         await this.adapter.continueConversation(this.userBotConvo[element].convoRef, async (sendContext) => {
                             await sendContext.sendActivity(messageToAgent)
                         })
+                        console.log(this.userBotConvo[element])
                         await this.adapter.continueConversation(this.userBotConvo[this.userBotConvo[element].userConvo.user.id].convoRef, async (sendContext) => {
                             await sendContext.sendActivity(messageToUser)
                             await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(cards.feedbackSmileyCard)))
@@ -580,7 +581,7 @@ class LiveAgentChatbot extends ActivityHandler {
                         this.userBotConvo[element]["userConnected"] = 0
                         this.userBotConvo[this.userBotConvo[element].userConvo.user.id]["agentConnected"] = 0
                         this.userBotConvo[this.userBotConvo[element].userConvo.user.id]["userQueuePosition"] = 0
-                        this.userBotConvo[this.userBotConvo[element].userConvo.user.id]["agentConvo"] = this.userBotConvo[element].convoRef
+                        delete this.userBotConvo[this.userBotConvo[element].userConvo.user.id]["agentConvo"]
                         delete this.userBotConvo[element].userConvo
                     }
                     ////////////////////////////user connected but not sending message-----------------------------
