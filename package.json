@@ -23,7 +23,9 @@
         "fetch-ponyfill": "^6.1.0",
         "jwt-simple": "^0.5.6",
         "moment": "^2.24.0",
+        "mssql": "^6.3.0",
         "path": "^0.12.7",
+        "pg-format": "^1.0.4",
         "request": "^2.88.2",
         "restify": "~8.4.0"
     },

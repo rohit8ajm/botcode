@@ -206,157 +206,165 @@ module.exports.userHelpCard = async (message) => {
     return card;
 }
 
-module.exports.feedbackSmileyCard = {
-    "type": "AdaptiveCard",
-    "body": [
-        {
-            "type": "Container",
-            "items": [
-                {
-                    "type": "TextBlock",
-                    "size": "Medium",
-                    "text": "Great! Please rate your experience."
-                },
-                {
-                    "type": "ColumnSet",
-                    "columns": [
-                        {
-                            "type": "Column",
-                            "width": "auto",
-                            "items": [
-                                {
-                                    "type": "Image",
-                                    "url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIw8kXVT2smkXp-LdYxMfgZKRfKnldfFytpgcBHULIODxETWlm1hQ_4_qHWAEGAzdfa9PRbkdqSwp8uQrpBiBILWHG72ZKuvo&usqp=CAU&ec=45732303",
-                                    "size": "Small",
-                                    "horizontalAlignment": "Center"
-                                },
-                                {
-                                    "type": "TextBlock",
-                                    "text": "Terrible",
-                                    "wrap": true,
-                                    "horizontalAlignment": "Center",
-                                    "spacing": "None"
+module.exports.feedbackSmileyCard = (feedbackType) => {
+    var card = {
+        "type": "AdaptiveCard",
+        "body": [
+            {
+                "type": "Container",
+                "items": [
+                    {
+                        "type": "TextBlock",
+                        "size": "Medium",
+                        "text": "Great! Please rate your experience."
+                    },
+                    {
+                        "type": "ColumnSet",
+                        "columns": [
+                            {
+                                "type": "Column",
+                                "width": "auto",
+                                "items": [
+                                    {
+                                        "type": "Image",
+                                        "url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIw8kXVT2smkXp-LdYxMfgZKRfKnldfFytpgcBHULIODxETWlm1hQ_4_qHWAEGAzdfa9PRbkdqSwp8uQrpBiBILWHG72ZKuvo&usqp=CAU&ec=45732303",
+                                        "size": "Small",
+                                        "horizontalAlignment": "Center"
+                                    },
+                                    {
+                                        "type": "TextBlock",
+                                        "text": "Terrible",
+                                        "wrap": true,
+                                        "horizontalAlignment": "Center",
+                                        "spacing": "None"
+                                    }
+                                ],
+                                "selectAction": {
+                                    "type": "Action.Submit",
+                                    "data": {
+                                        "userResponse": "smileyFeedback",
+                                        "feedbackValue": "Terrible",
+                                        "feedbackType": feedbackType
+                                    }
                                 }
-                            ],
-                            "selectAction": {
-                                "type": "Action.Submit",
-                                "data": {
-                                    "userResponse": "smileyFeedback",
-                                    "feedbackValue": "Terrible"
+                            },
+                            {
+                                "type": "Column",
+                                "width": "auto",
+                                "items": [
+                                    {
+                                        "type": "Image",
+                                        "url": "https://i.pinimg.com/originals/24/8c/c4/248cc4eec11b158d6eaf49c7088022a4.jpg",
+                                        "size": "Small",
+                                        "horizontalAlignment": "Center"
+                                    },
+                                    {
+                                        "type": "TextBlock",
+                                        "text": "Poor",
+                                        "wrap": true,
+                                        "horizontalAlignment": "Center",
+                                        "spacing": "None"
+                                    }
+                                ],
+                                "selectAction": {
+                                    "type": "Action.Submit",
+                                    "data": {
+                                        "userResponse": "smileyFeedback",
+                                        "feedbackValue": "Poor",
+                                        "feedbackType": feedbackType
+                                    }
+                                }
+                            },
+                            {
+                                "type": "Column",
+                                "width": "auto",
+                                "items": [
+                                    {
+                                        "type": "Image",
+                                        "url": "https://iconvulture.com/wp-content/uploads/2017/12/meh-face-emoticon.svg",
+                                        "size": "Small",
+                                        "horizontalAlignment": "Center"
+                                    },
+                                    {
+                                        "type": "TextBlock",
+                                        "text": "Fair",
+                                        "wrap": true,
+                                        "horizontalAlignment": "Center",
+                                        "spacing": "None"
+                                    }
+                                ],
+                                "selectAction": {
+                                    "type": "Action.Submit",
+                                    "data": {
+                                        "userResponse": "smileyFeedback",
+                                        "feedbackValue": "Fair",
+                                        "feedbackType": feedbackType
+                                    }
+                                }
+                            },
+                            {
+                                "type": "Column",
+                                "width": "auto",
+                                "items": [
+                                    {
+                                        "type": "Image",
+                                        "url": "https://image.flaticon.com/icons/png/512/42/42877.png",
+                                        "size": "Small",
+                                        "horizontalAlignment": "Center"
+                                    },
+                                    {
+                                        "type": "TextBlock",
+                                        "text": "Good",
+                                        "wrap": true,
+                                        "horizontalAlignment": "Center",
+                                        "spacing": "None"
+                                    }
+                                ],
+                                "selectAction": {
+                                    "type": "Action.Submit",
+                                    "data": {
+                                        "userResponse": "smileyFeedback",
+                                        "feedbackValue": "Good",
+                                        "feedbackType": feedbackType
+                                    }
+                                }
+                            },
+                            {
+                                "type": "Column",
+                                "width": "auto",
+                                "items": [
+                                    {
+                                        "type": "Image",
+                                        "url": "https://icons.iconarchive.com/icons/iconsmind/outline/512/Laughing-icon.png",
+                                        "size": "Small",
+                                        "horizontalAlignment": "Center"
+                                    },
+                                    {
+                                        "type": "TextBlock",
+                                        "text": "Excellent",
+                                        "wrap": true,
+                                        "horizontalAlignment": "Center",
+                                        "spacing": "None"
+                                    }
+                                ],
+                                "selectAction": {
+                                    "type": "Action.Submit",
+                                    "data": {
+                                        "userResponse": "smileyFeedback",
+                                        "feedbackValue": "Excellent",
+                                        "feedbackType": feedbackType
+                                    }
                                 }
                             }
-                        },
-                        {
-                            "type": "Column",
-                            "width": "auto",
-                            "items": [
-                                {
-                                    "type": "Image",
-                                    "url": "https://i.pinimg.com/originals/24/8c/c4/248cc4eec11b158d6eaf49c7088022a4.jpg",
-                                    "size": "Small",
-                                    "horizontalAlignment": "Center"
-                                },
-                                {
-                                    "type": "TextBlock",
-                                    "text": "Poor",
-                                    "wrap": true,
-                                    "horizontalAlignment": "Center",
-                                    "spacing": "None"
-                                }
-                            ],
-                            "selectAction": {
-                                "type": "Action.Submit",
-                                "data": {
-                                    "userResponse": "smileyFeedback",
-                                    "feedbackValue": "Poor"
-                                }
-                            }
-                        },
-                        {
-                            "type": "Column",
-                            "width": "auto",
-                            "items": [
-                                {
-                                    "type": "Image",
-                                    "url": "https://iconvulture.com/wp-content/uploads/2017/12/meh-face-emoticon.svg",
-                                    "size": "Small",
-                                    "horizontalAlignment": "Center"
-                                },
-                                {
-                                    "type": "TextBlock",
-                                    "text": "Fair",
-                                    "wrap": true,
-                                    "horizontalAlignment": "Center",
-                                    "spacing": "None"
-                                }
-                            ],
-                            "selectAction": {
-                                "type": "Action.Submit",
-                                "data": {
-                                    "userResponse": "smileyFeedback",
-                                    "feedbackValue": "Fair"
-                                }
-                            }
-                        },
-                        {
-                            "type": "Column",
-                            "width": "auto",
-                            "items": [
-                                {
-                                    "type": "Image",
-                                    "url": "https://image.flaticon.com/icons/png/512/42/42877.png",
-                                    "size": "Small",
-                                    "horizontalAlignment": "Center"
-                                },
-                                {
-                                    "type": "TextBlock",
-                                    "text": "Good",
-                                    "wrap": true,
-                                    "horizontalAlignment": "Center",
-                                    "spacing": "None"
-                                }
-                            ],
-                            "selectAction": {
-                                "type": "Action.Submit",
-                                "data": {
-                                    "userResponse": "smileyFeedback",
-                                    "feedbackValue": "Good"
-                                }
-                            }
-                        },
-                        {
-                            "type": "Column",
-                            "width": "auto",
-                            "items": [
-                                {
-                                    "type": "Image",
-                                    "url": "https://icons.iconarchive.com/icons/iconsmind/outline/512/Laughing-icon.png",
-                                    "size": "Small",
-                                    "horizontalAlignment": "Center"
-                                },
-                                {
-                                    "type": "TextBlock",
-                                    "text": "Excellent",
-                                    "wrap": true,
-                                    "horizontalAlignment": "Center",
-                                    "spacing": "None"
-                                }
-                            ],
-                            "selectAction": {
-                                "type": "Action.Submit",
-                                "data": {
-                                    "userResponse": "smileyFeedback",
-                                    "feedbackValue": "Excellent"
-                                }
-                            }
-                        }
-                    ]
-                }
-            ]
-        }
-    ],
-    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-    "version": "1.2"
+                        ]
+                    }
+                ]
+            }
+        ],
+        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+        "version": "1.2"
+    }
+    return card;
 }
 
 module.exports.convoHistoryCard = (history, userId, count) => {

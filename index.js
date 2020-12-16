@@ -14,6 +14,7 @@ const { BotFrameworkAdapter, MemoryStorage, ConversationState, UserState } = req
 
 // This bot's main dialog.
 const { LiveAgentChatbot } = require('./bots/LiveAgentChatbot');
+const dbConnection = require('./bots/dbConnection')
 
 
 // Note: Ensure you have a .env file and include the MicrosoftAppId and MicrosoftAppPassword.
