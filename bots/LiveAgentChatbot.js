@@ -522,6 +522,7 @@ class LiveAgentChatbot extends ActivityHandler {
                                 ? this.userBotConvo[conversationReference.conversation.id]["requestSentToAgents"] = []
                                 : this.userBotConvo[conversationReference.conversation.id]["requestSentToAgents"];
                             this.userBotConvo[conversationReference.conversation.id]["agentConnected"] = 0
+                            this.userBotConvo[conversationReference.conversation.id]["userRequestAgentTime"] = new Date()
                             this.queueManagementLogic(conversationReference.conversation.id);
                         } else {
                             await context.sendActivity({
@@ -712,10 +713,22 @@ class LiveAgentChatbot extends ActivityHandler {
     //////////////////////////////////////queue management logic------------------------------------------------------
     async queueManagementLogic(userId) {
         try {
+
             this.userBotConvo[userId]['requestTimeObj'] = setInterval(async () => {
+                let queueSize, usermaxtime;
+                for (let i = 0; i < this.message.length; i++) {
+                    if (this.message[i].cr386_key === "MaximumUsersPerAgentInQueue") {
+                        queueSize = parseInt(this.message[i].cr386_value)
+                    }
+                    else if (this.message[i].cr386_key === "TotalWaitingTimeInMilliseconds") {
+                        usermaxtime = parseInt(this.message[i].cr386_value)
+                    }
+                }
+
                 let dataToInsert = [];
                 let availableAgentstoCheck = Object.keys(availableAgents);
-                if (availableAgentstoCheck.length > 0) {
+                let userqueu = Object.keys(this.userqueue)
+                if ((availableAgentstoCheck.length > 0) && (userqueu.length <= (availableAgentstoCheck.length * queueSize))) {
                     let time = new Date() - this.userBotConvo[userId]["activityTime"]
                     let xtime = 0;
                     for (let i = 0; i < this.message.length; i++) {
@@ -727,7 +740,7 @@ class LiveAgentChatbot extends ActivityHandler {
                     if (this.userBotConvo[userId]["requestCount"] === 0) {
                         time = xtime + 10
                     }
-                    if (time > xtime) {
+                    if ((time > xtime) && ((new Date() - this.userBotConvo[userId].userRequestAgentTime) <= usermaxtime)) {
                         this.userBotConvo[userId]["activityTime"] = new Date();
                         if (this.userBotConvo[userId]["agentRequestedLast"] !== undefined && this.userBotConvo[userId]["agentRequestedLast"] !== "abc") {
                             await this.adapter.continueConversation(this.userBotConvo[this.userBotConvo[userId]["agentRequestedLast"]].convoRef, async (sendContext) => {
@@ -926,6 +939,49 @@ class LiveAgentChatbot extends ActivityHandler {
                             }
                         }
 
+                    } else {
+                        clearInterval(this.userBotConvo[userId]['requestTimeObj'])
+
+                        if (this.userBotConvo[userId]["agentRequestedLast"] !== undefined && this.userBotConvo[userId]["agentRequestedLast"] !== "abc") {
+                            await this.adapter.continueConversation(this.userBotConvo[this.userBotConvo[userId]["agentRequestedLast"]].convoRef, async (sendContext) => {
+                                await sendContext.sendActivity({
+                                    type: ActivityTypes.Event,
+                                    name: "RemoveCard"
+                                })
+                            })
+                            this.userBotConvo[userId]["agentRequestedLast"] = "abc"
+                        }
+                        for (let i = 0; i < this.message.length; i++) {
+                            if (this.message[i].cr386_key.toLowerCase() === 'agentnotavailablemessage') {
+                                await this.adapter.continueConversation(this.userBotConvo[userId].convoRef, async (sendContext) => {
+                                    await sendContext.sendActivity({
+                                        type: ActivityTypes.Event,
+                                        name: "NoAgent",
+                                        text: "Agent is not available."
+                                    })
+                                    await sendContext.sendActivity(this.message[i].cr386_value);
+                                    await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.userHelpCard(this.message))))
+
+                                })
+                                dataToInsert.push({
+                                    "message": this.message[i].cr386_value,
+                                    "sender": "BOT",
+                                    "receiver": this.userBotConvo[userId].convoRef.conversation.id,
+                                    "convoId": this.userBotConvo[userId].convoRef.conversation.id
+                                }, {
+                                    "message": "Help Card",
+                                    "sender": "BOT",
+                                    "receiver": this.userBotConvo[userId].convoRef.conversation.id,
+                                    "convoId": this.userBotConvo[userId].convoRef.conversation.id
+                                }, {
+                                    "message": "Event: NoAgent",
+                                    "sender": "BOT",
+                                    "receiver": this.userBotConvo[userId].convoRef.conversation.id,
+                                    "convoId": this.userBotConvo[userId].convoRef.conversation.id
+                                })
+                                break;
+                            }
+                        }
                     }
                 } else {
                     clearInterval(this.userBotConvo[userId]['requestTimeObj'])
@@ -1138,16 +1194,13 @@ class LiveAgentChatbot extends ActivityHandler {
                     if (JSON.parse(response.body).answers[0].score < 30) {
                         resolve('No good match found in KB.')
                     } else {
-                        console.log(JSON.parse(response.body).answers[0],"--",
-                        JSON.parse(response.body).answers[0].questions,"---",
-                        JSON.parse(response.body).answers[0].metadata)
                         await dbQuery.faqQueris({
-                            "userId":conversationReference.conversation.id,
-                            "query":text,
-                            "faqQuestion":JSON.parse(response.body).answers[0].questions[0],
-                            "faqAnswer":JSON.parse(response.body).answers[0].answer,
-                            "faqCategory":JSON.parse(response.body).answers[0].metadata[0].value,
-                            "convoId":conversationReference.conversation.id
+                            "userId": conversationReference.conversation.id,
+                            "query": text,
+                            "faqQuestion": JSON.parse(response.body).answers[0].questions[0],
+                            "faqAnswer": JSON.parse(response.body).answers[0].answer,
+                            "faqCategory": JSON.parse(response.body).answers[0].metadata[0].value,
+                            "convoId": conversationReference.conversation.id
                         })
                         resolve(JSON.parse(response.body).answers[0].answer)
                     }

@@ -10,8 +10,8 @@ const config = {
 };
 sql.connect(config, function (err) {
     if (err) {
-        console.log("Database Conection failed, error occured=> ", err);
+        console.error("Database Conection failed, error occured=> ", err);
     } else {
-        console.log("Database connected");
+        console.error("Database connected");
     }
 });

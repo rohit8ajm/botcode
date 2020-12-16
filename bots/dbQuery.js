@@ -49,7 +49,6 @@ module.exports.faqQueris = (dataToInsert) => {
         let arr = [dataToInsert.userId, dataToInsert.query, dataToInsert.faqQuestion, dataToInsert.faqAnswer, dataToInsert.faqCategory, dataToInsert.convoId]
         let query = format('insert into nodeFaQQuestions (UserId,UserQuery,FAQQuestion,FAQAnswer,FAQCategory,ConversationId) values(%L)', arr)
         request.query(query, (err, result) => {
-            console.log(result,err)
         })
 
     } catch (error) {
