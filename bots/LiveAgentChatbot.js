@@ -30,38 +30,49 @@ class LiveAgentChatbot extends ActivityHandler {
                 let conversationReference = await TurnContext.getConversationReference(context.activity);
                 let dataToInsert = []
                 if (context.activity.name === 'webchat/exit' &&
-                    (this.userBotConvo[conversationReference.conversation.id] && this.userBotConvo[conversationReference.conversation.id].agentConvo)) {
+                    (this.userBotConvo[conversationReference.conversation.id])) {
                     dataToInsert.push({
                         "message": `Event: ${context.activity.name}`,
                         "sender": conversationReference.conversation.id,
                         "receiver": "BOT",
                         "convoId": conversationReference.conversation.id
                     })
-                    for (let i = 0; i < this.message.length; i++) {
-                        if (this.message[i].cr386_key === "UserCloseChatWindowMessage") {
-                            await this.adapter.continueConversation(this.userBotConvo[conversationReference.conversation.id].agentConvo, async (sendContext) => {
-                                await sendContext.sendActivity(this.message[i].cr386_value)
-                            })
-                            dataToInsert.push({
-                                "message": this.message[i].cr386_value,
-                                "sender": "BOT",
-                                "receiver": this.userBotConvo[conversationReference.conversation.id].agentConvo.user.name,
-                                "convoId": this.userBotConvo[conversationReference.conversation.id].agentConvo.conversation.id
-                            })
+                    if (this.userBotConvo[conversationReference.conversation.id].agentConvo) {
+                        for (let i = 0; i < this.message.length; i++) {
+                            if (this.message[i].cr386_key === "UserCloseChatWindowMessage") {
+                                await this.adapter.continueConversation(this.userBotConvo[conversationReference.conversation.id].agentConvo, async (sendContext) => {
+                                    await sendContext.sendActivity(this.message[i].cr386_value)
+                                })
+                                dataToInsert.push({
+                                    "message": this.message[i].cr386_value,
+                                    "sender": "BOT",
+                                    "receiver": this.userBotConvo[conversationReference.conversation.id].agentConvo.user.name,
+                                    "convoId": this.userBotConvo[conversationReference.conversation.id].agentConvo.conversation.id
+                                })
+                            }
                         }
+                        availableAgents[this.userBotConvo[conversationReference.conversation.id].agentConvo.user.name] = {}
+                        this.userBotConvo[this.userBotConvo[conversationReference.conversation.id].agentConvo.user.name]["userConnected"] = 0
+                        this.userBotConvo[conversationReference.conversation.id]["agentConnected"] = 0
+                        this.userBotConvo[conversationReference.conversation.id]["userQueuePosition"] = 0
+                        this.userBotConvo[conversationReference.conversation.id]["agentConvo"] = this.userBotConvo[conversationReference.conversation.id].agentConvo
+                        delete this.userBotConvo[this.userBotConvo[conversationReference.conversation.id].agentConvo.user.name].userConvo
+                        await dbQuery.agentRequestAnalysis({
+                            "requestStatus": "End",
+                            "agentEmail": this.userBotConvo[conversationReference.conversation.id].agentConvo.user.name,
+                            "userId": conversationReference.conversation.id,
+                            "convoId": conversationReference.conversation.id
+                        });
+                    } else {
+                        delete this.userqueue[conversationReference.conversation.id]
+                        clearInterval(this.userBotConvo[conversationReference.conversation.id]['requestTimeObj'])
+                        await dbQuery.userQueueLog({
+                            "userId": conversationReference.conversation.id,
+                            "convoId": conversationReference.conversation.id,
+                            "queueStatus": "Dequeue"
+                        })
                     }
-                    availableAgents[this.userBotConvo[conversationReference.conversation.id].agentConvo.user.name] = {}
-                    this.userBotConvo[this.userBotConvo[conversationReference.conversation.id].agentConvo.user.name]["userConnected"] = 0
-                    this.userBotConvo[conversationReference.conversation.id]["agentConnected"] = 0
-                    this.userBotConvo[conversationReference.conversation.id]["userQueuePosition"] = 0
-                    this.userBotConvo[conversationReference.conversation.id]["agentConvo"] = this.userBotConvo[conversationReference.conversation.id].agentConvo
-                    delete this.userBotConvo[this.userBotConvo[conversationReference.conversation.id].agentConvo.user.name].userConvo
-                    await dbQuery.agentRequestAnalysis({
-                        "requestStatus": "End",
-                        "agentEmail": this.userBotConvo[conversationReference.conversation.id].agentConvo.user.name,
-                        "userId": conversationReference.conversation.id,
-                        "convoId": conversationReference.conversation.id
-                    });
+
                 }
 
                 // else if (context.activity.name === 'webchat/typing') {
@@ -72,7 +83,7 @@ class LiveAgentChatbot extends ActivityHandler {
                 // } 
                 else if (context.activity.name === 'webchat/AgentInactive') {
                     dataToInsert.push({
-                        "message": `Event: ${context.activityTime.name}`,
+                        "message": `Event: ${context.activity.name}`,
                         "sender": conversationReference.user.name,
                         "receiver": "BOT",
                         "convoId": conversationReference.conversation.id
@@ -311,19 +322,22 @@ class LiveAgentChatbot extends ActivityHandler {
                         this.userBotConvo[conversationReference.user.name]["userConnected"] = 0
                         this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.conversation.id]["agentConnected"] = 0
                         this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.conversation.id]["userQueuePosition"] = 0
-                        delete this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.conversation.id]["agentConvo"]
-                        delete this.userBotConvo[conversationReference.user.name].userConvo
+                        
                         await dbQuery.agentRequestAnalysis({
                             "requestStatus": "End",
                             "agentEmail": conversationReference.user.name,
                             "userId": this.userBotConvo[conversationReference.user.name].userConvo.conversation.id,
                             "convoId": this.userBotConvo[conversationReference.user.name].userConvo.conversation.id
                         });
-
+                        delete this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.conversation.id]["agentConvo"]
+                        delete this.userBotConvo[conversationReference.user.name].userConvo
                     }
                     ///////////////////////////////agent checking user covo history----------------------
                     else if (context.activity.value && context.activity.value.agentResponse.toLowerCase() === "showmore") {
-                        await context.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(cards.convoHistoryCard(this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.conversation.id]["convoHistory"].slice((context.activity.value.count + 1 * 15)), context.activity.value.userConvo.conversation.id, context.activity.value.count + 1))))
+                        await context.sendActivity(MessageFactory.attachment(
+                            CardFactory.adaptiveCard(
+                                cards.convoHistoryCard(this.userBotConvo[context.activity.value.userConvo.conversation.id]["convoHistory"].slice(((context.activity.value.count + 1) * 15)), 
+                                context.activity.value.userConvo, context.activity.value.count + 1))))
                         dataToInsert.push({
                             "message": context.activity.value.agentResponse,
                             "sender": conversationReference.user.name,
@@ -409,7 +423,11 @@ class LiveAgentChatbot extends ActivityHandler {
                             "userId": this.userBotConvo[context.activity.value.userConvo.conversation.id].convoRef.conversation.id,
                             "convoId": this.userBotConvo[context.activity.value.userConvo.conversation.id].convoRef.conversation.id
                         });
-
+                        await dbQuery.userQueueLog({
+                            "userId": context.activity.value.userConvo.conversation.id,
+                            "convoId": context.activity.value.userConvo.conversation.id,
+                            "queueStatus": "Dequeue"
+                        })
                     }
                     ///////////////////////////////agent rejecting request--------------------------
                     else if (context.activity.value && context.activity.value.agentResponse.toLowerCase() === "reject") {
@@ -511,40 +529,73 @@ class LiveAgentChatbot extends ActivityHandler {
                             "receiver": "BOT",
                             "convoId": conversationReference.conversation.id
                         })
-                        let offHours = await apis.checkAgentTime(this.message)
-                        if (offHours.time === "working") {
-                            this.userqueue[conversationReference.conversation.id] = {};
-                            this.userBotConvo[conversationReference.conversation.id]["activityTime"] = new Date();
-                            this.userBotConvo[conversationReference.conversation.id]["convoRef"] = conversationReference;
-                            this.userBotConvo[conversationReference.conversation.id]["requestCount"] = 0;
-                            this.userBotConvo[conversationReference.conversation.id]["agentRequestCount"] = 0
-                            this.userBotConvo[conversationReference.conversation.id]["requestSentToAgents"] === undefined
-                                ? this.userBotConvo[conversationReference.conversation.id]["requestSentToAgents"] = []
-                                : this.userBotConvo[conversationReference.conversation.id]["requestSentToAgents"];
-                            this.userBotConvo[conversationReference.conversation.id]["agentConnected"] = 0
-                            this.userBotConvo[conversationReference.conversation.id]["userRequestAgentTime"] = new Date()
-                            this.queueManagementLogic(conversationReference.conversation.id);
+                        if (this.userqueue[conversationReference.conversation.id] === undefined) {
+                            let offHours = await apis.checkAgentTime(this.message)
+                            if (offHours.time === "working") {
+                                this.userqueue[conversationReference.conversation.id] = {};
+                                this.userBotConvo[conversationReference.conversation.id]["activityTime"] = new Date();
+                                this.userBotConvo[conversationReference.conversation.id]["convoRef"] = conversationReference;
+                                this.userBotConvo[conversationReference.conversation.id]["requestCount"] = 0;
+                                this.userBotConvo[conversationReference.conversation.id]["agentRequestCount"] = 0
+                                this.userBotConvo[conversationReference.conversation.id]["requestSentToAgents"] === undefined
+                                    ? this.userBotConvo[conversationReference.conversation.id]["requestSentToAgents"] = []
+                                    : this.userBotConvo[conversationReference.conversation.id]["requestSentToAgents"];
+                                this.userBotConvo[conversationReference.conversation.id]["agentConnected"] = 0
+                                this.userBotConvo[conversationReference.conversation.id]["userRequestAgentTime"] = new Date()
+                                this.queueManagementLogic(conversationReference.conversation.id, Object.keys(this.userqueue));
+                                await dbQuery.userQueueLog({
+                                    "userId": conversationReference.conversation.id,
+                                    "convoId": conversationReference.conversation.id,
+                                    "queueStatus": "Enqueue"
+                                })
+                            } else {
+                                await context.sendActivity({
+                                    type: ActivityTypes.Event,
+                                    text: offHours.message
+                                })
+                                for (let i = 0; i < this.message.length; i++) {
+                                    if (this.message[i].cr386_key === 'AgentOffHoursMessage') {
+                                        await context.sendActivity(this.message[i].cr386_value);
+                                        await context.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.userHelpCard(this.message))))
+                                        dataToInsert.push({
+                                            "message": this.message[i].cr386_value,
+                                            "sender": "BOT",
+                                            "receiver": conversationReference.conversation.id,
+                                            "convoId": conversationReference.conversation.id
+                                        }, {
+                                            "message": "Help Card",
+                                            "sender": "BOT",
+                                            "receiver": conversationReference.conversation.id,
+                                            "convoId": conversationReference.conversation.id
+                                        }, {
+                                            "message": "Event: OffHours",
+                                            "sender": "BOT",
+                                            "receiver": conversationReference.conversation.id,
+                                            "convoId": conversationReference.conversation.id
+                                        })
+                                        break;
+                                    }
+                                }
+                            }
                         } else {
-                            await context.sendActivity({
-                                type: ActivityTypes.Event,
-                                text: offHours.message
-                            })
+                            let key = Object.keys(this.userqueue)
+                            this.userBotConvo[conversationReference.conversation.id]["userQueuePosition"] = key.indexOf(conversationReference.conversation.id) + 1;
                             for (let i = 0; i < this.message.length; i++) {
-                                if (this.message[i].cr386_key === 'AgentOffHoursMessage') {
-                                    await context.sendActivity(this.message[i].cr386_value);
-                                    await context.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.userHelpCard(this.message))))
+                                if (this.message[i].cr386_key === "InQueuePositionMessage") {
+                                    await context.sendActivity({
+                                        type: ActivityTypes.Event,
+                                        name: "AgentQueue",
+                                        text: this.message[i].cr386_value.replace('{0}', `${key.indexOf(conversationReference.conversation.id) + 1}`)
+                                    });
+                                    await context.sendActivity(this.message[i].cr386_value.replace('{0}', `${key.indexOf(conversationReference.conversation.id) + 1}`))
+
                                     dataToInsert.push({
-                                        "message": this.message[i].cr386_value,
+                                        "message": this.message[i].cr386_value.replace('{0}', `${key.indexOf(conversationReference.conversation.id) + 1}`),
                                         "sender": "BOT",
                                         "receiver": conversationReference.conversation.id,
                                         "convoId": conversationReference.conversation.id
                                     }, {
-                                        "message": "Help Card",
-                                        "sender": "BOT",
-                                        "receiver": conversationReference.conversation.id,
-                                        "convoId": conversationReference.conversation.id
-                                    }, {
-                                        "message": "Event: OffHours",
+                                        "message": "Event: AgentQueue",
                                         "sender": "BOT",
                                         "receiver": conversationReference.conversation.id,
                                         "convoId": conversationReference.conversation.id
@@ -552,6 +603,7 @@ class LiveAgentChatbot extends ActivityHandler {
                                     break;
                                 }
                             }
+
                         }
 
                     }
@@ -574,7 +626,7 @@ class LiveAgentChatbot extends ActivityHandler {
                             })
                         } else if (context.activity.text.includes("smileyFeedback")) {
                             dataToInsert.push({
-                                "message": `Feedback(${context.activity.value.feedbackValue})-${context.activity.value.feedbackValue}`,
+                                "message": `Feedback(${context.activity.value.feedbackType})-${context.activity.value.feedbackValue}`,
                                 "sender": conversationReference.conversation.id,
                                 "receiver": "BOT",
                                 "convoId": conversationReference.conversation.id
@@ -711,7 +763,7 @@ class LiveAgentChatbot extends ActivityHandler {
     }
 
     //////////////////////////////////////queue management logic------------------------------------------------------
-    async queueManagementLogic(userId) {
+    async queueManagementLogic(userId, userque) {
         try {
 
             this.userBotConvo[userId]['requestTimeObj'] = setInterval(async () => {
@@ -727,10 +779,11 @@ class LiveAgentChatbot extends ActivityHandler {
 
                 let dataToInsert = [];
                 let availableAgentstoCheck = Object.keys(availableAgents);
-                let userqueu = Object.keys(this.userqueue)
+                let userqueu = userque
                 if ((availableAgentstoCheck.length > 0) && (userqueu.length <= (availableAgentstoCheck.length * queueSize))) {
                     let time = new Date() - this.userBotConvo[userId]["activityTime"]
                     let xtime = 0;
+
                     for (let i = 0; i < this.message.length; i++) {
                         if (this.message[i].cr386_key === "AgentWaitingTimeInMilliseconds") {
                             xtime = parseInt(this.message[i].cr386_value)
@@ -740,6 +793,7 @@ class LiveAgentChatbot extends ActivityHandler {
                     if (this.userBotConvo[userId]["requestCount"] === 0) {
                         time = xtime + 10
                     }
+
                     if ((time > xtime) && ((new Date() - this.userBotConvo[userId].userRequestAgentTime) <= usermaxtime)) {
                         this.userBotConvo[userId]["activityTime"] = new Date();
                         if (this.userBotConvo[userId]["agentRequestedLast"] !== undefined && this.userBotConvo[userId]["agentRequestedLast"] !== "abc") {
@@ -934,14 +988,19 @@ class LiveAgentChatbot extends ActivityHandler {
 
                                     this.userBotConvo[userId]["requestSentToAgents"] = []
                                     delete this.userqueue[userId]
+                                    await dbQuery.userQueueLog({
+                                        "userId": userId,
+                                        "convoId": userId,
+                                        "queueStatus": "Dequeue"
+                                    })
                                 }
                                 break;
                             }
                         }
 
-                    } else {
+                    } else if ((new Date() - this.userBotConvo[userId].userRequestAgentTime) > usermaxtime) {
                         clearInterval(this.userBotConvo[userId]['requestTimeObj'])
-
+                        delete this.userqueue[userId]
                         if (this.userBotConvo[userId]["agentRequestedLast"] !== undefined && this.userBotConvo[userId]["agentRequestedLast"] !== "abc") {
                             await this.adapter.continueConversation(this.userBotConvo[this.userBotConvo[userId]["agentRequestedLast"]].convoRef, async (sendContext) => {
                                 await sendContext.sendActivity({
@@ -982,9 +1041,15 @@ class LiveAgentChatbot extends ActivityHandler {
                                 break;
                             }
                         }
+                        await dbQuery.userQueueLog({
+                            "userId": userId,
+                            "convoId": userId,
+                            "queueStatus": "Dequeue"
+                        })
                     }
                 } else {
                     clearInterval(this.userBotConvo[userId]['requestTimeObj'])
+                    delete this.userqueue[userId]
                     if (this.userBotConvo[userId]["agentRequestedLast"] !== undefined && this.userBotConvo[userId]["agentRequestedLast"] !== "abc") {
                         await this.adapter.continueConversation(this.userBotConvo[this.userBotConvo[userId]["agentRequestedLast"]].convoRef, async (sendContext) => {
                             await sendContext.sendActivity({
@@ -1025,6 +1090,11 @@ class LiveAgentChatbot extends ActivityHandler {
                             break;
                         }
                     }
+                    await dbQuery.userQueueLog({
+                        "userId": userId,
+                        "convoId": userId,
+                        "queueStatus": "Dequeue"
+                    })
                 }
                 if (dataToInsert.length > 0) {
                     await dbQuery.insertChatLogs(dataToInsert)
@@ -1130,18 +1200,18 @@ class LiveAgentChatbot extends ActivityHandler {
                         dataToInsert.push({
                             "message": messageToUser,
                             "sender": "BOT",
-                            "receiver": this.userBotConvo[element].userConvo.conversation.id,
-                            "convoId": this.userBotConvo[element].userConvo.conversation.id
+                            "receiver": this.userBotConvo[element].convoRef.conversation.id,
+                            "convoId": this.userBotConvo[element].convoRef.conversation.id
                         }, {
                             "message": "Feedback Card",
                             "sender": "BOT",
-                            "receiver": this.userBotConvo[element].userConvo.conversation.id,
-                            "convoId": this.userBotConvo[element].userConvo.conversation.id
+                            "receiver": this.userBotConvo[element].convoRef.conversation.id,
+                            "convoId": this.userBotConvo[element].convoRef.conversation.id
                         }, {
                             "message": "Event: DisconnectedAgent",
                             "sender": "BOT",
-                            "receiver": this.userBotConvo[element].userConvo.conversation.id,
-                            "convoId": this.userBotConvo[element].userConvo.conversation.id
+                            "receiver": this.userBotConvo[element].convoRef.conversation.id,
+                            "convoId": this.userBotConvo[element].convoRef.conversation.id
                         }, {
                             "message": messageToAgent,
                             "sender": "BOT",

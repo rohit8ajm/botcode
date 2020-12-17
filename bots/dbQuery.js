@@ -55,3 +55,16 @@ module.exports.faqQueris = (dataToInsert) => {
         console.error(error);
     }
 }
+
+module.exports.userQueueLog = (dataToInsert) => {
+    try {
+        var request = new sql.Request();
+        let arr = [dataToInsert.userId, dataToInsert.queueStatus, dataToInsert.convoId]
+        let query = format('insert into nodeUserQueueLogs (UserId,QueueStatus,ConversationId) values(%L)', arr)
+        request.query(query, (err, result) => {
+        })
+
+    } catch (error) {
+        console.error(error);
+    }
+}
