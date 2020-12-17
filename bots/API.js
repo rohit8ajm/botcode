@@ -1,4 +1,3 @@
-const { resolve } = require('path');
 var request = require('request')
 function getToken() {
     return new Promise((resolve, reject) => {
@@ -253,7 +252,7 @@ module.exports.checkHoliday = () => {
             getToken().then(token => {
                 var options = {
                     'method': 'GET',
-                    'url': `${process.env.apiBaseURL}cr386_agentholidayses?$select=cr386_holidaydate,cr386_holidayname&$filter=cr386_holidaydate eq ${new Date().toISOString().slice(0,10)}`,
+                    'url': `${process.env.apiBaseURL}cr386_agentholidayses?$select=cr386_holidaydate,cr386_holidayname&$filter=cr386_holidaydate eq ${new Date().toISOString().slice(0, 10)}`,
                     'headers': {
                         'Authorization': `Bearer ${token}`
                     }
@@ -384,6 +383,33 @@ module.exports.setDropDown = (agentGuid, body) => {
             })
         } catch (error) {
             console.error("get config", error);
+        }
+    })
+}
+
+module.exports.getUserDetails = (email) => {
+    return new Promise((resolve, reject) => {
+        try {
+            var request = require('request');
+            var options = {
+                'method': 'GET',
+                'url': `https://oktapreview.benjaminmoore.com/api/v1/users?q=${email}`,
+                'headers': {
+                    'Authorization': process.env.apiAuthToken
+                }
+            };
+            request(options, function (error, response) {
+                if (error) {
+                    console.error(error);
+                    resolve();
+                }
+                else {
+                    console.log(response.body);
+                    resolve(response.body)
+                }
+            });
+        } catch (error) {
+            console.error(error);
         }
     })
 }

@@ -454,3 +454,120 @@ module.exports.convoHistoryCard = (history, userId, count) => {
         return card;
     }
 }
+
+module.exports.userProfileDetailCard = {
+    "type": "AdaptiveCard",
+    "body": [
+        {
+            "type": "TextBlock",
+            "weight": "Bolder",
+            "text": "Welcome To Online Store Chat",
+            "horizontalAlignment": "Center",
+            "wrap": true,
+            "size": "Medium"
+        },
+        {
+            "type": "TextBlock",
+            "text": "Please Enter Your Detail:",
+            "wrap": true,
+            "weight": "Bolder"
+        },
+        {
+            "type": "ColumnSet",
+            "columns": [
+                {
+                    "type": "Column",
+                    "width": "100px",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Name",
+                            "wrap": true,
+                            "fontType": "Default"
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "width": "stretch",
+                    "items": [
+                        {
+                            "type": "Input.Text",
+                            "placeholder": "Enter your Name",
+                            "id": "name"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "ColumnSet",
+            "columns": [
+                {
+                    "type": "Column",
+                    "width": "100px",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Email Id",
+                            "wrap": true
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "width": "stretch",
+                    "items": [
+                        {
+                            "type": "Input.Text",
+                            "placeholder": "Enter your E-mail.",
+                            "id": "email"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "ColumnSet",
+            "columns": [
+                {
+                    "type": "Column",
+                    "width": "100px",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Mobile No.",
+                            "wrap": true
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "width": "stretch",
+                    "items": [
+                        {
+                            "type": "Input.Text",
+                            "placeholder": "Enter your Mobile No.",
+                            "id": "phone",
+                            "style": "Tel"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "ActionSet",
+            "actions": [
+                {
+                    "type": "Action.Submit",
+                    "title": "Submit",
+                    "data": {
+                        "userResponse": "profileDetail"
+                    }
+                }
+            ]
+        }
+    ],
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "version": "1.2"
+}
