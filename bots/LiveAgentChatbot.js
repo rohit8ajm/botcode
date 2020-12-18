@@ -759,7 +759,7 @@ class LiveAgentChatbot extends ActivityHandler {
                                     "receiver": conversationReference.conversation.id,
                                     "convoId": conversationReference.conversation.id
                                 })
-                                let urls = qnaResults.answer.split('|');
+                                let urls = qnaResults.answer.split(',');
                                 if (qnaResults.category.toLowerCase().includes("video")) {
                                     await context.sendActivity(MessageFactory.attachment(CardFactory.videoCard(
                                         '',
