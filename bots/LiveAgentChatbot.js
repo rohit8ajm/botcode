@@ -1011,6 +1011,7 @@ class LiveAgentChatbot extends ActivityHandler {
                                                     text: "Agent is not available."
                                                 })
                                                 await sendContext.sendActivity(this.message[i].cr386_value)
+                                                await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.cardEmailAndPhoneNumber(this.message[i].cr386_value))))
                                                 await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.userHelpCard(this.message))))
 
                                             })
@@ -1067,6 +1068,7 @@ class LiveAgentChatbot extends ActivityHandler {
                                         text: "Agent is not available."
                                     })
                                     await sendContext.sendActivity(this.message[i].cr386_value);
+                                    await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.cardEmailAndPhoneNumber(this.message[i].cr386_value))))
                                     await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.userHelpCard(this.message))))
 
                                 })
@@ -1116,6 +1118,7 @@ class LiveAgentChatbot extends ActivityHandler {
                                     text: "Agent is not available."
                                 })
                                 await sendContext.sendActivity(this.message[i].cr386_value);
+                                await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.cardEmailAndPhoneNumber(this.message[i].cr386_value))))
                                 await sendContext.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(await cards.userHelpCard(this.message))))
 
                             })

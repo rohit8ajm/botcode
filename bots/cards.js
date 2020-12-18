@@ -571,3 +571,86 @@ module.exports.userProfileDetailCard = {
     "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
     "version": "1.2"
 }
+module.exports.cardEmailAndPhoneNumber = (message) => {
+    try {
+        var emailRegex = /\S+[a-z0-9]@[a-z0-9\.]+/img
+        var mobileRegex = new RegExp("\\+?\\(?\\d*\\)? ?\\(?\\d+\\)?\\d*([\\s./-]?\\d{2,})+", "g");
+        var companyEmail = message.match(emailRegex)
+        var companyMobileNumber = message.match(mobileRegex)
+        var card = {
+            "type": "AdaptiveCard",
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "version": "1.2",
+            "body": [
+                {
+                    "type": "Container",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Send us an email at:",
+                            "wrap": true,
+                            "spacing": "Medium"
+                        },
+                        {
+                            "type": "ColumnSet",
+                            "columns": [
+                                {
+                                    "type": "Column",
+                                    "width": "stretch",
+                                    "items": [
+                                        {
+                                            "type": "TextBlock",
+                                            "text": `${companyEmail}`,
+                                            "wrap": true,
+                                            "spacing": "None",
+                                            "color": "Accent"
+                                        }
+                                    ],
+                                    "spacing": "None",
+                                    "selectAction": {
+                                        "type": "Action.OpenUrl",
+                                        "url": `mailto:${companyEmail}`
+                                    }
+                                }
+                            ],
+                            "spacing": "None"
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": "Or Call us at:",
+                            "wrap": true,
+                            "spacing": "Medium"
+                        },
+                        {
+                            "type": "ColumnSet",
+                            "columns": [
+                                {
+                                    "type": "Column",
+                                    "width": "stretch",
+                                    "items": [
+                                        {
+                                            "type": "TextBlock",
+                                            "text": `${companyMobileNumber}`,
+                                            "wrap": true,
+                                            "spacing": "None",
+                                            "color": "Accent"
+                                        }
+                                    ],
+                                    "spacing": "None",
+                                    "selectAction": {
+                                        "type": "Action.OpenUrl",
+                                        "url": `tel:${companyMobileNumber}`
+                                    }
+                                }
+                            ],
+                            "spacing": "None"
+                        }
+                    ]
+                }
+            ]
+        }
+        return card
+    } catch (error) {
+        console.error(error);
+    }
+}
