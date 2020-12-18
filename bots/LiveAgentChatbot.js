@@ -74,13 +74,25 @@ class LiveAgentChatbot extends ActivityHandler {
                     }
 
                 }
+                else if (context.activity.name === 'webchat/typing') {
 
-                // else if (context.activity.name === 'webchat/typing') {
-                //     await context.sendActivity({
-                //         type: ActivityTypes.Typing,
-                //         text: "Agent is typing..."
-                //     })
-                // } 
+                    let agentExists = userType[conversationReference.user.name]
+                    if ((userType[conversationReference.user.name]["userType"] === "agent") && this.userBotConvo[conversationReference.user.name].userConnected > 0) {
+                        await this.adapter.continueConversation(this.userBotConvo[this.userBotConvo[conversationReference.user.name].userConvo.conversation.id].convoRef, async (sendContext) => {
+                            await sendContext.sendActivity({
+                                type: ActivityTypes.Typing
+                            })
+                        })
+                    } else {
+                        if (this.userBotConvo[conversationReference.conversation.id] && this.userBotConvo[conversationReference.conversation.id]["agentConnected"] === 1) {
+                            await this.adapter.continueConversation(this.userBotConvo[conversationReference.conversation.id].agentConvo, async (sendContext) => {
+                                await sendContext.sendActivity({
+                                    type: ActivityTypes.Typing
+                                })
+                            })
+                        }
+                    }
+                }
                 else if (context.activity.name === 'webchat/AgentInactive') {
                     dataToInsert.push({
                         "message": `Event: ${context.activity.name}`,
@@ -176,7 +188,7 @@ class LiveAgentChatbot extends ActivityHandler {
                         }
 
                         ///////////////////////////////////////welcome agent message---------------------------------------------------
-                        if (conversationReference.user.name 
+                        if (conversationReference.user.name
                             && (agentExists.email.includes(conversationReference.user.name.toLowerCase()))) {
                             dataToInsert.push({
                                 "message": "Event: webchat/join",
@@ -275,7 +287,7 @@ class LiveAgentChatbot extends ActivityHandler {
                 let dataToInsert = [];
                 /////////////////////////////agent flow------------------------------------
                 if (conversationReference.user.name && (agentExists.email.includes(conversationReference.user.name.toLowerCase())
-                        || userType[conversationReference.user.name]["userType"] === "agent")) {
+                    || userType[conversationReference.user.name]["userType"] === "agent")) {
                     userType[conversationReference.user.name]["userType"] = "agent"
                     availableAgents[conversationReference.user.name] = {}
                     this.userBotConvo[conversationReference.user.name] === undefined ? this.userBotConvo[conversationReference.user.name] = {} : this.userBotConvo
