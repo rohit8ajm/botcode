@@ -459,12 +459,19 @@ module.exports.userProfileDetailCard = {
     "type": "AdaptiveCard",
     "body": [
         {
-            "type": "TextBlock",
-            "weight": "Bolder",
-            "text": "Welcome To Online Store Chat",
-            "horizontalAlignment": "Center",
-            "wrap": true,
-            "size": "Medium"
+            "type": "Container",
+            "items": [
+                {
+                    "type": "TextBlock",
+                    "weight": "Bolder",
+                    "text": "Welcome To Online Store Chat",
+                    "horizontalAlignment": "Center",
+                    "wrap": true,
+                    "size": "Medium",
+                    "color": "Accent"
+                }
+            ],
+            "style": "emphasis"
         },
         {
             "type": "TextBlock",
@@ -481,7 +488,7 @@ module.exports.userProfileDetailCard = {
                     "items": [
                         {
                             "type": "TextBlock",
-                            "text": "Name",
+                            "text": "First Name",
                             "wrap": true,
                             "fontType": "Default"
                         }
@@ -493,8 +500,36 @@ module.exports.userProfileDetailCard = {
                     "items": [
                         {
                             "type": "Input.Text",
-                            "placeholder": "Enter your Name",
-                            "id": "name"
+                            "placeholder": "Enter your First Name",
+                            "id": "firstName"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "ColumnSet",
+            "columns": [
+                {
+                    "type": "Column",
+                    "width": "100px",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Last Name",
+                            "wrap": true,
+                            "fontType": "Default"
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "width": "stretch",
+                    "items": [
+                        {
+                            "type": "Input.Text",
+                            "placeholder": "Enter your Last Name",
+                            "id": "lastName"
                         }
                     ]
                 }

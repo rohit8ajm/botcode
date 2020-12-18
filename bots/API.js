@@ -1,4 +1,5 @@
 var request = require('request')
+const dbQuery = require('./dbQuery')
 function getToken() {
     return new Promise((resolve, reject) => {
         try {
@@ -390,22 +391,30 @@ module.exports.setDropDown = (agentGuid, body) => {
 module.exports.getUserDetails = (email) => {
     return new Promise((resolve, reject) => {
         try {
-            var request = require('request');
             var options = {
                 'method': 'GET',
+                'rejectUnauthorized': false,
                 'url': `https://oktapreview.benjaminmoore.com/api/v1/users?q=${email}`,
                 'headers': {
-                    'Authorization': process.env.apiAuthToken
+                    'Authorization': process.env.oktaToken
                 }
             };
-            request(options, function (error, response) {
+            request(options, async function (error, response) {
                 if (error) {
                     console.error(error);
                     resolve();
                 }
                 else {
-                    console.log(response.body);
-                    resolve(response.body)
+                    let data = JSON.parse(response.body)
+                    console.log(data[0].profile);
+                    await dbQuery.userProfileDetail({
+                        "ProfileSource":"OktaAPI",
+                        "Email":data[0].profile.email,
+                        "FirstName":data[0].profile.firstName,
+                        "LastName":data[0].profile.lastName,
+                        "phone":data[0].profile.mobilePhone,
+                    })
+                    resolve(`${data[0].profile.firstName} ${data[0].profile.lastName}`)
                 }
             });
         } catch (error) {

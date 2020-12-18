@@ -68,3 +68,17 @@ module.exports.userQueueLog = (dataToInsert) => {
         console.error(error);
     }
 }
+
+module.exports.userProfileDetail = (dataToInsert) => {
+    try {
+        var request = new sql.Request();
+        let arr = [dataToInsert.Email, dataToInsert.FirstName, dataToInsert.LastName, dataToInsert.phone, dataToInsert.ProfileSource]
+        let query = format('insert into nodeUserProfileDetails (Email,FirstName,LastName,Phone,ProfileSource) values(%L)', arr)
+        request.query(query, (err, result) => {
+            console.log(err, result)
+        })
+
+    } catch (error) {
+        console.error(error);
+    }
+}

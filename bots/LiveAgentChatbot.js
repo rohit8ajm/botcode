@@ -210,7 +210,7 @@ class LiveAgentChatbot extends ActivityHandler {
                         else {
                             let name = conversationReference.user.name.split(',');
                             if (name[1] !== "null") {
-                                // let userProfile = await apis.getUserDetails(name[1]);
+                                let userProfile = await apis.getUserDetails(name[1]);
                                 dataToInsert.push({
                                     "message": "Event: webchat/join",
                                     "sender": conversationReference.conversation.id,
@@ -654,6 +654,13 @@ class LiveAgentChatbot extends ActivityHandler {
                                 break;
                             }
                         }
+                        await dbQuery.userProfileDetail({
+                            "ProfileSource":"DetailCard",
+                            "Email":context.activity.value.email,
+                            "FirstName":context.activity.value.firstName,
+                            "LastName":context.activity.value.lastName,
+                            "phone":context.activity.value.phone,
+                        })
                     }
                     //////////////////////////user message to bot------------------------------------
                     else {
