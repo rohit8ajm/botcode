@@ -81,3 +81,23 @@ module.exports.userProfileDetail = (dataToInsert) => {
         console.error(error);
     }
 }
+
+module.exports.usersInQueue = (users) => {
+    try {
+        var request = new sql.Request();
+        request.input('users', sql.Int, users);
+        request.query(`IF NOT EXISTS (SELECT * FROM nodeAzureServiceBusQueue)
+
+        INSERT INTO nodeAzureServiceBusQueue(UsersInQueue)
+        VALUES(@users)
+    
+    ELSE
+    
+        UPDATE nodeAzureServiceBusQueue
+        SET UsersInQueue =@users`, (err, result) => {
+        })
+
+    } catch (error) {
+        console.error(error);
+    }
+}

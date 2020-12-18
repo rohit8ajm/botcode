@@ -71,6 +71,7 @@ class LiveAgentChatbot extends ActivityHandler {
                             "convoId": conversationReference.conversation.id,
                             "queueStatus": "Dequeue"
                         })
+                        await dbQuery.usersInQueue(Object.keys(this.userqueue).length);
                     }
 
                 }
@@ -449,6 +450,7 @@ class LiveAgentChatbot extends ActivityHandler {
                             "convoId": context.activity.value.userConvo.conversation.id,
                             "queueStatus": "Dequeue"
                         })
+                        await dbQuery.usersInQueue(Object.keys(this.userqueue).length);
                     }
                     ///////////////////////////////agent rejecting request--------------------------
                     else if (context.activity.value && context.activity.value.agentResponse.toLowerCase() === "reject") {
@@ -569,6 +571,7 @@ class LiveAgentChatbot extends ActivityHandler {
                                     "convoId": conversationReference.conversation.id,
                                     "queueStatus": "Enqueue"
                                 })
+                                await dbQuery.usersInQueue(Object.keys(this.userqueue).length);
                             } else {
                                 await context.sendActivity({
                                     type: ActivityTypes.Event,
@@ -1058,6 +1061,7 @@ class LiveAgentChatbot extends ActivityHandler {
                                         "convoId": userId,
                                         "queueStatus": "Dequeue"
                                     })
+                                    await dbQuery.usersInQueue(Object.keys(this.userqueue).length);
                                 }
                                 break;
                             }
@@ -1111,6 +1115,7 @@ class LiveAgentChatbot extends ActivityHandler {
                             "convoId": userId,
                             "queueStatus": "Dequeue"
                         })
+                        await dbQuery.usersInQueue(Object.keys(this.userqueue).length);
                     }
                 } else {
                     clearInterval(this.userBotConvo[userId]['requestTimeObj'])
@@ -1160,6 +1165,7 @@ class LiveAgentChatbot extends ActivityHandler {
                         "convoId": userId,
                         "queueStatus": "Dequeue"
                     })
+                    await dbQuery.usersInQueue(Object.keys(this.userqueue).length);
                 }
                 if (dataToInsert.length > 0) {
                     await dbQuery.insertChatLogs(dataToInsert)
