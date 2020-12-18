@@ -743,40 +743,40 @@ class LiveAgentChatbot extends ActivityHandler {
                             })
                             let qnaResults = await this.callQnAapi(context.activity.text, conversationReference)
                             this.userBotConvo[conversationReference.conversation.id]["convoHistory"].push(`**User:** ${context.activity.text}`)
-                            if (qnaResults.toLowerCase().includes("greeting")) {
-                                await context.sendActivity(qnaResults.slice(9))
-                                this.userBotConvo[conversationReference.conversation.id]["convoHistory"].push(`**Bot:** ${qnaResults.slice(9)}`)
+                            if (qnaResults.answer.toLowerCase().includes("greeting")) {
+                                await context.sendActivity(qnaResults.answer.slice(9))
+                                this.userBotConvo[conversationReference.conversation.id]["convoHistory"].push(`**Bot:** ${qnaResults.answer.slice(9)}`)
                                 dataToInsert.push({
-                                    "message": qnaResults.slice(9),
+                                    "message": qnaResults.answer.slice(9),
                                     "sender": "BOT",
                                     "receiver": conversationReference.conversation.id,
                                     "convoId": conversationReference.conversation.id
                                 })
-                            } else if (qnaResults !== 'No good match found in KB.') {
+                            } else if (qnaResults.answer !== 'No good match found in KB.') {
                                 dataToInsert.push({
-                                    "message": qnaResults,
+                                    "message": qnaResults.answer,
                                     "sender": "BOT",
                                     "receiver": conversationReference.conversation.id,
                                     "convoId": conversationReference.conversation.id
                                 })
-                                let urls = qnaResults.split('|');
-                                if (qnaResults.toLowerCase().includes("video") && urls.length === 3) {
+                                let urls = qnaResults.answer.split('|');
+                                if (qnaResults.category.toLowerCase().includes("video")) {
                                     await context.sendActivity(MessageFactory.attachment(CardFactory.videoCard(
                                         '',
                                         [{
-                                            url: `${urls[1]}`
+                                            url: `${urls[0]}`
                                         }],
                                         [{
                                             title: 'Lean More',
                                             type: 'openUrl',
-                                            value: urls[2]
+                                            value: urls[1]
                                         }]
                                     )));
-                                } else if (qnaResults.toLowerCase().includes("video") && urls.length === 2) {
-                                    await context.sendActivity(urls[1])
+                                } else if (qnaResults.category.toLowerCase().includes("article")) {
+                                    await context.sendActivity(qnaResults.answer)
                                 }
                                 else {
-                                    await context.sendActivity(qnaResults)
+                                    await context.sendActivity(qnaResults.answer)
                                 }
                                 await context.sendActivity(MessageFactory.attachment(CardFactory.adaptiveCard(cards.confimrmationCard)))
                                 dataToInsert.push({
@@ -785,7 +785,7 @@ class LiveAgentChatbot extends ActivityHandler {
                                     "receiver": conversationReference.conversation.id,
                                     "convoId": conversationReference.conversation.id
                                 })
-                                this.userBotConvo[conversationReference.conversation.id]["convoHistory"].push(`**Bot:** ${qnaResults}`)
+                                this.userBotConvo[conversationReference.conversation.id]["convoHistory"].push(`**Bot:** ${qnaResults.answer}`)
                             } else {
 
                                 for (let i = 0; i < this.message.length; i++) {
@@ -1337,7 +1337,10 @@ class LiveAgentChatbot extends ActivityHandler {
                             "faqCategory": JSON.parse(response.body).answers[0].metadata[0].value,
                             "convoId": conversationReference.conversation.id
                         })
-                        resolve(JSON.parse(response.body).answers[0].answer)
+                        resolve({
+                            "answer": JSON.parse(response.body).answers[0].answer,
+                            "category": JSON.parse(response.body).answers[0].metadata[0].value
+                        })
                     }
                 }
             });
