@@ -462,16 +462,20 @@ module.exports.userProfileDetailCard = {
             "type": "Container",
             "items": [
                 {
-                    "type": "TextBlock",
-                    "weight": "Bolder",
-                    "text": "Welcome To Online Store Chat",
-                    "horizontalAlignment": "Center",
-                    "wrap": true,
-                    "size": "Medium",
-                    "color": "Accent"
+                    "type": "Container",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Welcome to Online Store Chat",
+                            "wrap": true,
+                            "horizontalAlignment": "Center",
+                            "weight": "Bolder"
+                        }
+                    ],
+                    "style": "warning",
+                    "bleed": true
                 }
-            ],
-            "style": "emphasis"
+            ]
         },
         {
             "type": "TextBlock",

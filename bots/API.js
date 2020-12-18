@@ -406,15 +406,18 @@ module.exports.getUserDetails = (email) => {
                 }
                 else {
                     let data = JSON.parse(response.body)
-                    console.log(data[0].profile);
-                    await dbQuery.userProfileDetail({
-                        "ProfileSource":"OktaAPI",
-                        "Email":data[0].profile.email,
-                        "FirstName":data[0].profile.firstName,
-                        "LastName":data[0].profile.lastName,
-                        "phone":data[0].profile.mobilePhone,
-                    })
-                    resolve(`${data[0].profile.firstName} ${data[0].profile.lastName}`)
+                    if (data.length > 0) {
+                        await dbQuery.userProfileDetail({
+                            "ProfileSource": "OktaAPI",
+                            "Email": data[0].profile.email,
+                            "FirstName": data[0].profile.firstName,
+                            "LastName": data[0].profile.lastName,
+                            "phone": data[0].profile.mobilePhone,
+                        })
+                        resolve(`${data[0].profile.firstName} ${data[0].profile.lastName}`)
+                    } else {
+                        resolve("no user")
+                    }
                 }
             });
         } catch (error) {

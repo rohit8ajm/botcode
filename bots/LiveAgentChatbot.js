@@ -4,7 +4,7 @@
 const { ActivityHandler, TurnContext, TeamsInfo, CardFactory, MessageFactory, ActivityTypes, ActionTypes } = require('botbuilder');
 const cards = require('./cards')
 const apis = require('./API');
-const dbQuery = require('./dbQuery')
+const dbQuery = require('./dbQuery');
 let userType = {}
 let availableAgents = {}
 class LiveAgentChatbot extends ActivityHandler {
@@ -165,20 +165,18 @@ class LiveAgentChatbot extends ActivityHandler {
                     if (membersAdded[cnt].id !== context.activity.recipient.id) {
                         this.message = await apis.getConfigDetails();
                         let conversationReference = await TurnContext.getConversationReference(context.activity);
-                        console.log(conversationReference.user.name)
                         // let agentExists = await apis.getAvailableAgents(conversationReference.user.name);
                         let agentExists;
-                        // if (conversationReference.user.name.toLowerCase().includes("agent")) {
-                             
-                            if ((!Object.keys(userType).includes(conversationReference.user.name))) {
-                                agentExists = await apis.getAvailableAgents(conversationReference.user.name);
-                                userType[conversationReference.user.name] = agentExists
-                            } else {
-                                agentExists = userType[conversationReference.user.name]
-                            }
-                        // }
+
+                        if ((!Object.keys(userType).includes(conversationReference.user.name))) {
+                            agentExists = await apis.getAvailableAgents(conversationReference.user.name);
+                            userType[conversationReference.user.name] = agentExists
+                        } else {
+                            agentExists = userType[conversationReference.user.name]
+                        }
+
                         ///////////////////////////////////////welcome agent message---------------------------------------------------
-                        if (conversationReference.user.name //&& agentExists && agentExists[conversationReference.user.name]
+                        if (conversationReference.user.name 
                             && (agentExists.email.includes(conversationReference.user.name.toLowerCase()))) {
                             dataToInsert.push({
                                 "message": "Event: webchat/join",
@@ -277,7 +275,7 @@ class LiveAgentChatbot extends ActivityHandler {
                 let dataToInsert = [];
                 /////////////////////////////agent flow------------------------------------
                 if (conversationReference.user.name && (agentExists.email.includes(conversationReference.user.name.toLowerCase())
-                    || userType[conversationReference.user.name]["userType"] === "agent")) {
+                        || userType[conversationReference.user.name]["userType"] === "agent")) {
                     userType[conversationReference.user.name]["userType"] = "agent"
                     availableAgents[conversationReference.user.name] = {}
                     this.userBotConvo[conversationReference.user.name] === undefined ? this.userBotConvo[conversationReference.user.name] = {} : this.userBotConvo
@@ -619,7 +617,7 @@ class LiveAgentChatbot extends ActivityHandler {
 
                     }
                     //////////////////////////user submitting profile detail
-                    else if(context.activity.text && context.activity.text.toLowerCase().includes("profiledetail")){
+                    else if (context.activity.text && context.activity.text.toLowerCase().includes("profiledetail")) {
                         for (let i = 0; i < this.message.length; i++) {
                             if (this.message[i].cr386_key.toLowerCase() === 'userwelcomemessage') {
 
@@ -655,11 +653,11 @@ class LiveAgentChatbot extends ActivityHandler {
                             }
                         }
                         await dbQuery.userProfileDetail({
-                            "ProfileSource":"DetailCard",
-                            "Email":context.activity.value.email,
-                            "FirstName":context.activity.value.firstName,
-                            "LastName":context.activity.value.lastName,
-                            "phone":context.activity.value.phone,
+                            "ProfileSource": "DetailCard",
+                            "Email": context.activity.value.email,
+                            "FirstName": context.activity.value.firstName,
+                            "LastName": context.activity.value.lastName,
+                            "phone": context.activity.value.phone,
                         })
                     }
                     //////////////////////////user message to bot------------------------------------

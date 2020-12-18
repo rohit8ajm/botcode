@@ -75,7 +75,6 @@ module.exports.userProfileDetail = (dataToInsert) => {
         let arr = [dataToInsert.Email, dataToInsert.FirstName, dataToInsert.LastName, dataToInsert.phone, dataToInsert.ProfileSource]
         let query = format('insert into nodeUserProfileDetails (Email,FirstName,LastName,Phone,ProfileSource) values(%L)', arr)
         request.query(query, (err, result) => {
-            console.log(err, result)
         })
 
     } catch (error) {
