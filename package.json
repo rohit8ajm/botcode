@@ -1,0 +1,46 @@
+{
+    "name": "cic-chatbot",
+    "version": "1.1.0",
+    "description": "CIC Chatbot to support customer queries through chat.",
+    "author": "Rohit Sharma",
+    "main": "index.js",
+    "scripts": {
+        "start": "node ./index.js",
+        "watch": "nodemon ./index.js",
+        "lint": "eslint .",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://gitlab.com/rohit8ajm/bmcbotcode.git"
+    },
+    "dependencies": {
+        "applicationinsights": "^1.8.8",
+        "azure-storage": "^2.10.7",
+        "body-parser": "^1.19.0",
+        "botbuilder": "~4.7.0",
+        "botbuilder-dialogs": "~4.7.0",
+        "dotenv": "^8.2.0",
+        "fetch-ponyfill": "^6.1.0",
+        "fs": "0.0.1-security",
+        "jwt-simple": "^0.5.6",
+        "lodash": "^4.17.21",
+        "moment": "^2.24.0",
+        "mssql": "^6.3.0",
+        "node-schedule": "^2.1.0",
+        "nodejs-nodemailer-outlook": "^1.2.3",
+        "path": "^0.12.7",
+        "pg-format": "^1.0.4",
+        "request": "^2.88.2",
+        "restify": "^11.1.0"
+    },
+    "devDependencies": {
+        "eslint": "^6.6.0",
+        "eslint-config-standard": "^14.1.0",
+        "eslint-plugin-import": "^2.18.2",
+        "eslint-plugin-node": "^10.0.0",
+        "eslint-plugin-promise": "^4.2.1",
+        "eslint-plugin-standard": "^4.0.1",
+        "nodemon": "~1.19.4"
+    }
+}
